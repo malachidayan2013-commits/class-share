@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="he">
+<head>
+    <meta charset="UTF-8">
+    <title>שיתוף קבצים</title>
+</head>
+<body>
+
+<h2>העלאת קובץ</h2>
+<form action="/upload" method="post" enctype="multipart/form-data">
+    <input type="file" name="file" required>
+    <button type="submit">העלה</button>
+</form>
+
+<hr>
+
+<h2>קבצים זמינים</h2>
+<ul>
+    {% for file in files %}
+        <li>
+            {{ file }}
+            | <a href="{{ url_for('download', filename=file) }}">הורדה</a>
+            | <a href="/delete/{{ file }}">מחיקה</a>
+        </li>
+    {% else %}
+        <li>אין קבצים</li>
+    {% endfor %}
+</ul>
+
+</body>
+</html>
