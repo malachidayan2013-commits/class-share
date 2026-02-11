@@ -1,103 +1,128 @@
-from flask import Flask, render_template, request, redirect, url_for, send_from_directory
+from flask import Flask, render_template, request, redirect, send_from_directory, session
 import os
-import uuid
-from werkzeug.utils import secure_filename
+import json
 
 app = Flask(__name__)
+app.secret_key = "super_secret_key"
 
-# ===============================
-# הגדרת תיקיית uploads נכון
-# ===============================
+UPLOAD_FOLDER = "uploads"
+DATA_FILE = "data.json"
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-UPLOAD_FOLDER = os.path.join(BASE_DIR, "uploads")
-app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
 
-# ===============================
-# דף ראשי
-# ===============================
+# יצירת קובץ סיסמה אם לא קיים
+if not os.path.exists(DATA_FILE):
+    with open(DATA_FILE, "w", encoding="utf-8") as f:
+        json.dump({"password": "1234"}, f)
+
+
+def get_password():
+    with open(DATA_FILE, "r", encoding="utf-8") as f:
+        data = json.load(f)
+    return data["password"]
+
+
+def set_password(new_password):
+    with open(DATA_FILE, "w", encoding="utf-8") as f:
+        json.dump({"password": new_password}, f)
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        role = request.form.get("role")
+
+        if role == "student":
+            session["role"] = "student"
+            return redirect("/")
+
+        if role == "teacher":
+            password = request.form.get("password")
+            if password == get_password():
+                session["role"] = "teacher"
+                return redirect("/")
+            else:
+                return "סיסמה שגויה"
+
+    return render_template("login.html")
+
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect("/login")
+
 
 @app.route("/")
 def index():
-    files = os.listdir(app.config["UPLOAD_FOLDER"])
-    return render_template("index.html", files=files)
+    if "role" not in session:
+        return redirect("/login")
 
-# ===============================
-# העלאת קובץ
-# ===============================
+    files = os.listdir(UPLOAD_FOLDER)
+    return render_template("index.html", files=files, role=session["role"])
+
 
 @app.route("/upload", methods=["POST"])
 def upload():
-    file = request.files.get("file")
+    if session.get("role") != "teacher":
+        return "אין הרשאה"
 
-    if not file or file.filename == "":
-        return redirect(url_for("index"))
+    file = request.files["file"]
+    if file:
+        file.save(os.path.join(UPLOAD_FOLDER, file.filename))
 
-    filename = secure_filename(file.filename)
+    return redirect("/")
 
-    if filename == "":
-        filename = "file"
 
-    unique_name = str(uuid.uuid4()) + "_" + filename
-    file.save(os.path.join(app.config["UPLOAD_FOLDER"], unique_name))
+@app.route("/download/<filename>")
+def download(filename):
+    return send_from_directory(UPLOAD_FOLDER, filename, as_attachment=True)
 
-    return redirect(url_for("index"))
-
-# ===============================
-# שינוי שם קובץ (מתוקן נכון)
-# ===============================
 
 @app.route("/rename", methods=["POST"])
 def rename():
-    old_name = request.form.get("old_name")
-    new_name = request.form.get("new_name")
+    if session.get("role") != "teacher":
+        return "אין הרשאה"
 
-    if not old_name or not new_name:
-        return redirect(url_for("index"))
+    old_name = request.form["old_name"]
+    new_name = request.form["new_name"]
 
-    old_path = os.path.join(app.config["UPLOAD_FOLDER"], old_name)
+    old_path = os.path.join(UPLOAD_FOLDER, old_name)
+    new_path = os.path.join(UPLOAD_FOLDER, new_name)
 
-    if not os.path.exists(old_path):
-        return redirect(url_for("index"))
+    if os.path.exists(old_path):
+        os.rename(old_path, new_path)
 
-    # שומרים סיומת מקורית!
-    _, ext = os.path.splitext(old_name)
-
-    cleaned_name = secure_filename(new_name)
-
-    if cleaned_name == "":
-        cleaned_name = "file"
-
-    new_filename = cleaned_name + ext
-    new_path = os.path.join(app.config["UPLOAD_FOLDER"], new_filename)
-
-    os.rename(old_path, new_path)
-
-    return redirect(url_for("index"))
-
-# ===============================
-# הורדת קובץ
-# ===============================
-
-@app.route("/download/<path:filename>")
-def download(filename):
-    file_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-
-    print("Trying to download:", file_path)
-
-    if not os.path.exists(file_path):
-        print("File does NOT exist!")
-        return "File not found on server", 404
-
-    return send_from_directory(
-        app.config["UPLOAD_FOLDER"],
-        filename,
-        as_attachment=True
-    )
+    return redirect("/")
 
 
-# ===============================
+@app.route("/delete/<filename>")
+def delete(filename):
+    if session.get("role") != "teacher":
+        return "אין הרשאה"
+
+    path = os.path.join(UPLOAD_FOLDER, filename)
+    if os.path.exists(path):
+        os.remove(path)
+
+    return redirect("/")
+
+
+@app.route("/change_password", methods=["POST"])
+def change_password():
+    if session.get("role") != "teacher":
+        return "אין הרשאה"
+
+    current = request.form["current_password"]
+    new = request.form["new_password"]
+
+    if current == get_password():
+        set_password(new)
+        return redirect("/")
+    else:
+        return "סיסמה נוכחית שגויה"
+
 
 if __name__ == "__main__":
     app.run(debug=True)
