@@ -2,82 +2,98 @@
 <html lang="he">
 <head>
     <meta charset="UTF-8">
-    <title>Drive - שיתוף קבצים</title>
+    <title>Drive</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
 
 <div class="container">
 
-    <!-- Sidebar -->
     <div class="sidebar">
         <h2>📁 Drive</h2>
 
         {% if role == "teacher" %}
-        <form class="upload-form" action="{{ url_for('upload') }}" method="POST" enctype="multipart/form-data">
-            <input type="file" name="file" required>
-            <button type="submit">+ העלאה חדשה</button>
-        </form>
+        <button onclick="toggleMenu()">+ חדש</button>
+
+        <div id="newMenu" style="display:none; margin-top:10px;">
+            <form action="/upload" method="POST" enctype="multipart/form-data">
+                <input type="file" name="file" required>
+                <button type="submit">📄 העלאת קובץ</button>
+            </form>
+            <br>
+            <form action="/create_folder" method="POST">
+                <input type="text" name="folder_name" placeholder="שם תיקייה" required>
+                <button type="submit">📁 צור תיקייה</button>
+            </form>
+            <br>
+            <form action="/create_link" method="POST">
+                <input type="text" name="link_name" placeholder="שם קישור" required><br>
+                <input type="text" name="url" placeholder="הכנס קישור" required><br>
+                <button type="submit">🔗 צור קישור</button>
+            </form>
+        </div>
         {% endif %}
 
         <ul>
             <li>📂 הקבצים שלי</li>
-            <li>🕒 אחרונים</li>
-            <li>⭐ מסומנים בכוכב</li>
             <li>🗑️ אשפה</li>
         </ul>
 
-        <br>
-
         {% if role == "teacher" %}
         <h4>שינוי סיסמה</h4>
-        <form action="{{ url_for('change_password') }}" method="POST">
-            <input type="password" name="current_password" placeholder="סיסמה נוכחית" required><br><br>
-            <input type="password" name="new_password" placeholder="סיסמה חדשה" required><br><br>
-            <button type="submit">שנה סיסמה</button>
+        <form action="/change_password" method="POST">
+            <input type="password" name="current_password" placeholder="נוכחית" required><br>
+            <input type="password" name="new_password" placeholder="חדשה" required><br>
+            <button type="submit">שנה</button>
         </form>
         {% endif %}
 
-        <br><br>
-        <a href="{{ url_for('logout') }}">🚪 התנתקות</a>
+        <br>
+        <a href="/logout">🚪 התנתקות</a>
     </div>
 
-    <!-- Main -->
     <div class="main">
-        <div class="header">הקבצים שלי</div>
+        <h2>הקבצים שלי</h2>
 
-        <div class="files-grid">
-            {% for file in files %}
-            <div class="file-card">
+        {% for file in files %}
+        <div class="file-card">
+            📄 {{ file }}
+            <br>
+            <a href="/download/{{ file }}">⬇ הורדה</a>
 
-                <div class="file-name">
-                    📄 {{ file }}
-                </div>
-
-                <div class="file-actions">
-                    <a href="{{ url_for('download', filename=file) }}">⬇ הורדה</a>
-
-                    {% if role == "teacher" %}
-                    <a href="{{ url_for('delete', filename=file) }}" 
-                       onclick="return confirm('למחוק את הקובץ?')">🗑 מחיקה</a>
-                    {% endif %}
-                </div>
-
-                {% if role == "teacher" %}
-                <form class="rename-form" action="{{ url_for('rename') }}" method="POST">
-                    <input type="hidden" name="old_name" value="{{ file }}">
-                    <input type="text" name="new_name" placeholder="שם חדש" required>
-                    <button type="submit">שנה שם</button>
-                </form>
-                {% endif %}
-
-            </div>
-            {% endfor %}
+            {% if role == "teacher" %}
+            | <a href="/delete_file/{{ file }}">🗑 מחיקה</a>
+            <form action="/rename" method="POST" style="display:inline;">
+                <input type="hidden" name="old_name" value="{{ file }}">
+                <input type="text" name="new_name" placeholder="שם חדש" required>
+                <button type="submit">שנה שם</button>
+            </form>
+            {% endif %}
         </div>
+        {% endfor %}
+
+        {% for link in links %}
+        <div class="file-card">
+            🔗 {{ link.name }}
+            <br>
+            <a href="{{ link.url }}" target="_blank">פתח</a>
+
+            {% if role == "teacher" %}
+            | <a href="/delete_link/{{ link.name }}">🗑 מחיקה</a>
+            {% endif %}
+        </div>
+        {% endfor %}
 
     </div>
 
 </div>
+
+<script>
+function toggleMenu() {
+    var menu = document.getElementById("newMenu");
+    menu.style.display = menu.style.display === "none" ? "block" : "none";
+}
+</script>
 
 </body>
 </html>
