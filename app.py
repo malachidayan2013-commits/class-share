@@ -6,15 +6,13 @@ from werkzeug.utils import secure_filename
 app = Flask(__name__)
 
 # ===================================
-# הגדרת תיקיית uploads בצורה נכונה
+# הגדרת תיקיית uploads
 # ===================================
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_FOLDER = os.path.join(BASE_DIR, "uploads")
 
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
-
-# יוצר את התיקייה אם לא קיימת
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # ===================================
@@ -27,7 +25,7 @@ def index():
     return render_template("index.html", files=files)
 
 # ===================================
-# העלאת קובץ (כולל תיקון שמות בעברית)
+# העלאת קובץ
 # ===================================
 
 @app.route("/upload", methods=["POST"])
@@ -40,18 +38,42 @@ def upload():
     if file.filename == "":
         return redirect(url_for("index"))
 
-    # מנקה שם קובץ מתווים בעייתיים
     filename = secure_filename(file.filename)
-
-    # אם השם יוצא ריק (קורה לפעמים בעברית מלאה)
     if filename == "":
         filename = "file"
 
-    # מוסיף מזהה ייחודי למניעת התנגשויות
     unique_name = str(uuid.uuid4()) + "_" + filename
+    file.save(os.path.join(app.config["UPLOAD_FOLDER"], unique_name))
 
-    file_path = os.path.join(app.config["UPLOAD_FOLDER"], unique_name)
-    file.save(file_path)
+    return redirect(url_for("index"))
+
+# ===================================
+# שינוי שם קובץ (מתוקן!)
+# ===================================
+
+@app.route("/rename", methods=["POST"])
+def rename():
+    old_name = request.form.get("old_name")
+    new_name = request.form.get("new_name")
+
+    if not old_name or not new_name:
+        return redirect(url_for("index"))
+
+    old_path = os.path.join(app.config["UPLOAD_FOLDER"], old_name)
+
+    # מנקה שם חדש
+    cleaned_name = secure_filename(new_name)
+
+    if cleaned_name == "":
+        return redirect(url_for("index"))
+
+    new_path = os.path.join(app.config["UPLOAD_FOLDER"], cleaned_name)
+
+    # אם קובץ לא קיים
+    if not os.path.exists(old_path):
+        return redirect(url_for("index"))
+
+    os.rename(old_path, new_path)
 
     return redirect(url_for("index"))
 
