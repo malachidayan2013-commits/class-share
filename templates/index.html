@@ -13,10 +13,12 @@
     <div class="sidebar">
         <h2>📁 Drive</h2>
 
+        {% if role == "teacher" %}
         <form class="upload-form" action="{{ url_for('upload') }}" method="POST" enctype="multipart/form-data">
             <input type="file" name="file" required>
             <button type="submit">+ העלאה חדשה</button>
         </form>
+        {% endif %}
 
         <ul>
             <li>📂 הקבצים שלי</li>
@@ -24,6 +26,20 @@
             <li>⭐ מסומנים בכוכב</li>
             <li>🗑️ אשפה</li>
         </ul>
+
+        <br>
+
+        {% if role == "teacher" %}
+        <h4>שינוי סיסמה</h4>
+        <form action="{{ url_for('change_password') }}" method="POST">
+            <input type="password" name="current_password" placeholder="סיסמה נוכחית" required><br><br>
+            <input type="password" name="new_password" placeholder="סיסמה חדשה" required><br><br>
+            <button type="submit">שנה סיסמה</button>
+        </form>
+        {% endif %}
+
+        <br><br>
+        <a href="{{ url_for('logout') }}">🚪 התנתקות</a>
     </div>
 
     <!-- Main -->
@@ -40,13 +56,20 @@
 
                 <div class="file-actions">
                     <a href="{{ url_for('download', filename=file) }}">⬇ הורדה</a>
+
+                    {% if role == "teacher" %}
+                    <a href="{{ url_for('delete', filename=file) }}" 
+                       onclick="return confirm('למחוק את הקובץ?')">🗑 מחיקה</a>
+                    {% endif %}
                 </div>
 
+                {% if role == "teacher" %}
                 <form class="rename-form" action="{{ url_for('rename') }}" method="POST">
                     <input type="hidden" name="old_name" value="{{ file }}">
                     <input type="text" name="new_name" placeholder="שם חדש" required>
                     <button type="submit">שנה שם</button>
                 </form>
+                {% endif %}
 
             </div>
             {% endfor %}
