@@ -82,11 +82,20 @@ def rename():
 
 @app.route("/download/<path:filename>")
 def download(filename):
+    file_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+
+    print("Trying to download:", file_path)
+
+    if not os.path.exists(file_path):
+        print("File does NOT exist!")
+        return "File not found on server", 404
+
     return send_from_directory(
         app.config["UPLOAD_FOLDER"],
         filename,
         as_attachment=True
     )
+
 
 # ===============================
 
