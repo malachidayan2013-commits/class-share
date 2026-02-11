@@ -2,60 +2,13 @@
 <html lang="he">
 <head>
     <meta charset="UTF-8">
-    <title>שיתוף קבצים</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f2f5f9;
-            direction: rtl;
-            text-align: center;
-            padding: 40px;
-        }
-
-        h1 {
-            color: #333;
-        }
-
-        .upload-box {
-            margin-bottom: 30px;
-        }
-
-        .file-list {
-            margin-top: 30px;
-        }
-
-        .file-item {
-            background: white;
-            padding: 15px;
-            margin: 10px auto;
-            width: 60%;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-
-        a {
-            margin: 0 5px;
-            text-decoration: none;
-            color: #007bff;
-        }
-
-        button {
-            padding: 5px 10px;
-            margin-top: 5px;
-            cursor: pointer;
-        }
-
-        input[type="text"] {
-            padding: 5px;
-            margin-top: 5px;
-        }
-    </style>
+    <title>מערכת שיתוף קבצים</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
 
     <h1>📁 מערכת שיתוף קבצים</h1>
 
-    <!-- העלאת קובץ -->
     <div class="upload-box">
         <form action="{{ url_for('upload') }}" method="POST" enctype="multipart/form-data">
             <input type="file" name="file" required>
@@ -63,18 +16,15 @@
         </form>
     </div>
 
-    <!-- רשימת קבצים -->
     <div class="file-list">
         {% for file in files %}
         <div class="file-item">
 
             <strong>{{ file }}</strong>
-            <br><br>
+            <br>
 
-            <!-- הורדה -->
             <a href="{{ url_for('download', filename=file) }}">⬇ הורדה</a>
 
-            <!-- שינוי שם -->
             <form action="{{ url_for('rename') }}" method="POST">
                 <input type="hidden" name="old_name" value="{{ file }}">
                 <input type="text" name="new_name" placeholder="שם חדש" required>
