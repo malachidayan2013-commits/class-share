@@ -2,38 +2,59 @@
 <html lang="he">
 <head>
     <meta charset="UTF-8">
-    <title>מערכת שיתוף קבצים</title>
+    <title>Drive - שיתוף קבצים</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
 
-    <h1>📁 מערכת שיתוף קבצים</h1>
+<div class="container">
 
-    <div class="upload-box">
-        <form action="{{ url_for('upload') }}" method="POST" enctype="multipart/form-data">
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <h2>📁 Drive</h2>
+
+        <form class="upload-form" action="{{ url_for('upload') }}" method="POST" enctype="multipart/form-data">
             <input type="file" name="file" required>
-            <button type="submit">העלה קובץ</button>
+            <button type="submit">+ העלאה חדשה</button>
         </form>
+
+        <ul>
+            <li>📂 הקבצים שלי</li>
+            <li>🕒 אחרונים</li>
+            <li>⭐ מסומנים בכוכב</li>
+            <li>🗑️ אשפה</li>
+        </ul>
     </div>
 
-    <div class="file-list">
-        {% for file in files %}
-        <div class="file-item">
+    <!-- Main -->
+    <div class="main">
+        <div class="header">הקבצים שלי</div>
 
-            <strong>{{ file }}</strong>
-            <br>
+        <div class="files-grid">
+            {% for file in files %}
+            <div class="file-card">
 
-            <a href="{{ url_for('download', filename=file) }}">⬇ הורדה</a>
+                <div class="file-name">
+                    📄 {{ file }}
+                </div>
 
-            <form action="{{ url_for('rename') }}" method="POST">
-                <input type="hidden" name="old_name" value="{{ file }}">
-                <input type="text" name="new_name" placeholder="שם חדש" required>
-                <button type="submit">✏ שנה שם</button>
-            </form>
+                <div class="file-actions">
+                    <a href="{{ url_for('download', filename=file) }}">⬇ הורדה</a>
+                </div>
 
+                <form class="rename-form" action="{{ url_for('rename') }}" method="POST">
+                    <input type="hidden" name="old_name" value="{{ file }}">
+                    <input type="text" name="new_name" placeholder="שם חדש" required>
+                    <button type="submit">שנה שם</button>
+                </form>
+
+            </div>
+            {% endfor %}
         </div>
-        {% endfor %}
+
     </div>
+
+</div>
 
 </body>
 </html>
