@@ -39,6 +39,11 @@ def get_password():
 
 
 @app.route("/")
+def index():
+    print("SESSION:", session)
+    print("ROLE:", session.get("role"))
+    return render_template("index.html", role=session.get("role"))
+
 @app.route("/folder/<path:folder>")
 def index(folder="root"):
     data = load_data()
