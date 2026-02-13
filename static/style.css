@@ -1,70 +1,210 @@
-body {
-    margin: 0;
-    font-family: Arial;
-    direction: rtl;
-    background: #f4f6f9;
-}
-
-.container {
-    display: flex;
-}
-
-.sidebar {
-    width: 250px;
-    background: #ddecff;
-    color: white;
-    padding: 20px;
-    height: 100vh;
-}
-
-.sidebar a {
-    display: block;
-    color: white;
-    margin: 10px 0;
-    text-decoration: none;
-}
-
-.main {
-    flex: 1;
-    padding: 30px;
-}
-
-.files {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, 200px);
-    gap: 20px;
-}
-
-.card {
-    background: white;
-    padding: 15px;
-    border-radius: 12px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
-}
-
-button {
-    background: #2563eb;
-    color: white;
-    border: none;
-    padding: 6px 12px;
-    border-radius: 6px;
-    cursor: pointer;
-}
-
-.delete {
-    color: red;
-}
-
-.login-box {
-    background: white;
-    padding: 30px;
-    border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-}
-
-.center {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-}
+diff --git a/static/style.css b/static/style.css
+index 15c4a66ac11422e6428bf3c0bca8deb1bc1c1948..d0fca11203c84b13c25c3aadda6249a66a9b5534 100644
+--- a/static/style.css
++++ b/static/style.css
+@@ -1,70 +1,159 @@
++* {
++  box-sizing: border-box;
++}
++
+ body {
+-    margin: 0;
+-    font-family: Arial;
+-    direction: rtl;
+-    background: #f4f6f9;
++  margin: 0;
++  font-family: "Heebo", Arial, sans-serif;
++  background: #f3f6fb;
++  color: #1f2937;
+ }
+ 
+-.container {
+-    display: flex;
++.layout {
++  display: grid;
++  grid-template-columns: 280px 1fr;
++  min-height: 100vh;
+ }
+ 
+ .sidebar {
+-    width: 250px;
+-    background: #ddecff;
+-    color: white;
+-    padding: 20px;
+-    height: 100vh;
++  background: #111827;
++  color: #fff;
++  padding: 24px;
++  display: flex;
++  flex-direction: column;
++  gap: 18px;
++  position: sticky;
++  top: 0;
++  height: 100vh;
++}
++
++.subtitle {
++  color: #c7d2fe;
++  margin-top: -10px;
++}
++
++.sidebar nav a,
++.link-btn {
++  display: block;
++  color: #f8fafc;
++  text-decoration: none;
++  background: #1f2937;
++  padding: 10px 12px;
++  border-radius: 10px;
++  margin-bottom: 8px;
++}
++
++.panel {
++  background: #1f2937;
++  border-radius: 12px;
++  padding: 12px;
++}
++
++.count {
++  background: #ef4444;
++  padding: 2px 8px;
++  border-radius: 999px;
++  margin-inline-start: 8px;
++}
++
++.content {
++  padding: 28px;
++}
++
++.topbar {
++  display: flex;
++  justify-content: space-between;
++  align-items: start;
++  gap: 16px;
++  margin-bottom: 24px;
+ }
+ 
+-.sidebar a {
+-    display: block;
+-    color: white;
+-    margin: 10px 0;
+-    text-decoration: none;
++.breadcrumbs {
++  display: flex;
++  align-items: center;
++  gap: 8px;
++  flex-wrap: wrap;
+ }
+ 
+-.main {
+-    flex: 1;
+-    padding: 30px;
++.breadcrumbs a {
++  color: #2563eb;
++  text-decoration: none;
+ }
+ 
+-.files {
+-    display: grid;
+-    grid-template-columns: repeat(auto-fill, 200px);
+-    gap: 20px;
++.new-menu summary {
++  background: #2563eb;
++  color: white;
++  border-radius: 10px;
++  padding: 10px 14px;
++  cursor: pointer;
++  list-style: none;
++}
++
++.menu-panel {
++  margin-top: 10px;
++  background: #fff;
++  border: 1px solid #e5e7eb;
++  border-radius: 12px;
++  padding: 12px;
++  width: min(360px, 92vw);
++  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
++}
++
++.menu-panel form {
++  display: grid;
++  gap: 8px;
++  margin-bottom: 12px;
++}
++
++.grid {
++  display: grid;
++  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
++  gap: 16px;
+ }
+ 
+ .card {
+-    background: white;
+-    padding: 15px;
+-    border-radius: 12px;
+-    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
++  background: white;
++  border-radius: 14px;
++  border: 1px solid #e5e7eb;
++  padding: 14px;
++  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.06);
+ }
+ 
+-button {
+-    background: #2563eb;
+-    color: white;
+-    border: none;
+-    padding: 6px 12px;
+-    border-radius: 6px;
+-    cursor: pointer;
++.title-row a {
++  color: #0f172a;
++  text-decoration: none;
++  font-weight: 600;
+ }
+ 
+-.delete {
+-    color: red;
++.actions {
++  margin-top: 12px;
++  display: flex;
++  align-items: center;
++  justify-content: space-between;
++  gap: 8px;
+ }
+ 
+-.login-box {
+-    background: white;
+-    padding: 30px;
+-    border-radius: 12px;
+-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
++.meta {
++  color: #6b7280;
++  font-size: 0.9rem;
++}
++
++input,
++button {
++  width: 100%;
++  border-radius: 8px;
++  border: 1px solid #d1d5db;
++  padding: 9px;
++  font-family: inherit;
++}
++
++button {
++  background: #2563eb;
++  color: white;
++  border: none;
++  cursor: pointer;
+ }
+ 
+-.center {
+-    display: flex;
+-    justify-content: center;
+-    align-items: center;
+-    height: 100vh;
++button.danger {
++  background: #dc2626;
+ }

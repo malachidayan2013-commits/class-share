@@ -1,82 +1,214 @@
-<!DOCTYPE html>
-<html lang="he">
-<head>
-<meta charset="UTF-8">
-<title>מערכת קבצים</title>
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body>
-
-<div class="container">
-
-<div class="sidebar">
-<h2>📁 מערכת קבצים</h2>
-
-<a href="/">ראשי</a>
-<a href="/folder/trash">🗑 אשפה</a>
-
-{% if role != "teacher" %}
-<form action="/login" method="POST">
-<input type="password" name="password" placeholder="סיסמת מורה">
-<button>כניסה</button>
-</form>
-{% else %}
-<a href="/logout">התנתק</a>
-
-<h4>שינוי סיסמה</h4>
-<form method="POST" action="/change_password">
-<input type="password" name="current" placeholder="נוכחית">
-<input type="password" name="new" placeholder="חדשה">
-<button>שנה</button>
-</form>
-{% endif %}
-
-</div>
-
-<div class="main">
-<h2>תיקייה: {{ folder }}</h2>
-
-{% if role == "teacher" %}
-<div class="new-box">
-<form method="POST" action="/create" enctype="multipart/form-data">
-<input type="hidden" name="folder" value="{{ folder }}">
-<select name="type">
-<option value="file">קובץ</option>
-<option value="link">קישור</option>
-<option value="folder">תיקייה</option>
-</select>
-<input type="text" name="name" placeholder="שם">
-<input type="file" name="file">
-<input type="text" name="url" placeholder="URL">
-<button>צור</button>
-</form>
-</div>
-{% endif %}
-
-<div class="files">
-{% for name, item in items.items() %}
-<div class="card">
-{% if item.type == "folder" %}
-📁 <a href="/folder/{{ item.path }}">{{ name }}</a>
-{% elif item.type == "file" %}
-📄 {{ name }} <a href="/download/{{ name }}">⬇</a>
-{% elif item.type == "link" %}
-🔗 <a href="{{ item.url }}" target="_blank">{{ name }}</a>
-{% endif %}
-
-{% if role == "teacher" and folder != "trash" %}
-<a class="delete" href="/delete/{{ folder }}/{{ name }}">🗑</a>
-{% endif %}
-
-{% if folder == "trash" %}
-<a href="/restore/{{ name }}">♻ שחזר</a>
-{% endif %}
-</div>
-{% endfor %}
-</div>
-
-</div>
-</div>
-
-</body>
-</html>
+diff --git a/templates/index.html b/templates/index.html
+index 0a162856e39f36e7c29edeb173b1ebf5366190bb..491491af4bc6c5369e97fbe29a437c53f11d98d4 100644
+--- a/templates/index.html
++++ b/templates/index.html
+@@ -1,82 +1,143 @@
+ <!DOCTYPE html>
+-<html lang="he">
++<html lang="he" dir="rtl">
+ <head>
+-<meta charset="UTF-8">
+-<title>מערכת קבצים</title>
+-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
++  <meta charset="UTF-8">
++  <meta name="viewport" content="width=device-width, initial-scale=1.0">
++  <title>Class Share</title>
++  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+ </head>
+ <body>
++  <div class="layout">
++    <aside class="sidebar">
++      <div>
++        <h1>📁 Class Share</h1>
++        <p class="subtitle">ניהול קבצים לכיתה</p>
++      </div>
+ 
+-<div class="container">
++      <nav>
++        <a href="{{ url_for('folder_view', folder_path='') }}">ראשי</a>
++        <a href="{{ url_for('trash_view') }}">אשפה {% if trash_count %}<span class="count">{{ trash_count }}</span>{% endif %}</a>
++      </nav>
+ 
+-<div class="sidebar">
+-<h2>📁 מערכת קבצים</h2>
++      {% if role != 'teacher' %}
++      <form class="panel" action="{{ url_for('login') }}" method="POST">
++        <h3>כניסת מורה</h3>
++        <input type="password" name="password" placeholder="סיסמת מורה" required>
++        <button type="submit">התחברות</button>
++      </form>
++      {% else %}
++      <div class="panel">
++        <h3>מחובר כמורה</h3>
++        <a class="link-btn" href="{{ url_for('logout') }}">התנתקות</a>
++      </div>
+ 
+-<a href="/">ראשי</a>
+-<a href="/folder/trash">🗑 אשפה</a>
++      <form class="panel" method="POST" action="{{ url_for('change_password') }}">
++        <h3>שינוי סיסמה</h3>
++        <input type="password" name="current" placeholder="סיסמה נוכחית" required>
++        <input type="password" name="new" placeholder="סיסמה חדשה" required>
++        <button type="submit">שמירה</button>
++      </form>
++      {% endif %}
++    </aside>
+ 
+-{% if role != "teacher" %}
+-<form action="/login" method="POST">
+-<input type="password" name="password" placeholder="סיסמת מורה">
+-<button>כניסה</button>
+-</form>
+-{% else %}
+-<a href="/logout">התנתק</a>
++    <main class="content">
++      <div class="topbar">
++        <div class="breadcrumbs">
++          {% for crumb in breadcrumbs %}
++            {% if crumb.path is not none %}
++              <a href="{{ url_for('folder_view', folder_path=crumb.path) }}">{{ crumb.name }}</a>
++            {% else %}
++              <span>{{ crumb.name }}</span>
++            {% endif %}
++            {% if not loop.last %}<span>/</span>{% endif %}
++          {% endfor %}
++        </div>
+ 
+-<h4>שינוי סיסמה</h4>
+-<form method="POST" action="/change_password">
+-<input type="password" name="current" placeholder="נוכחית">
+-<input type="password" name="new" placeholder="חדשה">
+-<button>שנה</button>
+-</form>
+-{% endif %}
++        {% if role == 'teacher' and not is_trash %}
++        <details class="new-menu">
++          <summary>+ חדש</summary>
++          <div class="menu-panel">
++            <form method="POST" action="{{ url_for('create_item') }}">
++              <input type="hidden" name="folder_path" value="{{ folder_path }}">
++              <input type="hidden" name="type" value="folder">
++              <input type="text" name="name" placeholder="שם תיקייה" required>
++              <button type="submit">יצירת תיקייה</button>
++            </form>
+ 
+-</div>
++            <form method="POST" action="{{ url_for('create_item') }}" enctype="multipart/form-data">
++              <input type="hidden" name="folder_path" value="{{ folder_path }}">
++              <input type="hidden" name="type" value="file">
++              <input type="file" name="file" required>
++              <button type="submit">העלאת קובץ</button>
++            </form>
+ 
+-<div class="main">
+-<h2>תיקייה: {{ folder }}</h2>
++            <form method="POST" action="{{ url_for('create_item') }}">
++              <input type="hidden" name="folder_path" value="{{ folder_path }}">
++              <input type="hidden" name="type" value="link">
++              <input type="text" name="name" placeholder="שם קישור" required>
++              <input type="url" name="url" placeholder="https://..." required>
++              <button type="submit">הוספת קישור</button>
++            </form>
++          </div>
++        </details>
++        {% endif %}
++      </div>
+ 
+-{% if role == "teacher" %}
+-<div class="new-box">
+-<form method="POST" action="/create" enctype="multipart/form-data">
+-<input type="hidden" name="folder" value="{{ folder }}">
+-<select name="type">
+-<option value="file">קובץ</option>
+-<option value="link">קישור</option>
+-<option value="folder">תיקייה</option>
+-</select>
+-<input type="text" name="name" placeholder="שם">
+-<input type="file" name="file">
+-<input type="text" name="url" placeholder="URL">
+-<button>צור</button>
+-</form>
+-</div>
+-{% endif %}
++      {% if is_trash %}
++      <section class="grid">
++        {% for entry in trash_items %}
++        <article class="card">
++          <div class="title-row">
++            <strong>
++              {% if entry.item.type == 'folder' %}📁{% elif entry.item.type == 'file' %}📄{% else %}🔗{% endif %}
++              {{ entry.item.name }}
++            </strong>
++          </div>
++          <p class="meta">נמחק מתוך: {{ entry.original_parent or 'ראשי' }}</p>
++          {% if role == 'teacher' %}
++          <form method="POST" action="{{ url_for('restore', trash_id=entry.id) }}">
++            <button type="submit">שחזור</button>
++          </form>
++          {% endif %}
++        </article>
++        {% else %}
++          <p>האשפה ריקה כרגע.</p>
++        {% endfor %}
++      </section>
++      {% else %}
++      <section class="grid">
++        {% for item in items %}
++        <article class="card">
++          <div class="title-row">
++            {% if item.type == 'folder' %}
++              <a href="{{ url_for('folder_view', folder_path=(folder_path ~ '/' if folder_path else '') ~ item.name) }}">📁 {{ item.name }}</a>
++            {% elif item.type == 'file' %}
++              <span>📄 {{ item.name }}</span>
++            {% else %}
++              <a href="{{ item.url }}" target="_blank" rel="noopener">🔗 {{ item.name }}</a>
++            {% endif %}
++          </div>
+ 
+-<div class="files">
+-{% for name, item in items.items() %}
+-<div class="card">
+-{% if item.type == "folder" %}
+-📁 <a href="/folder/{{ item.path }}">{{ name }}</a>
+-{% elif item.type == "file" %}
+-📄 {{ name }} <a href="/download/{{ name }}">⬇</a>
+-{% elif item.type == "link" %}
+-🔗 <a href="{{ item.url }}" target="_blank">{{ name }}</a>
+-{% endif %}
+-
+-{% if role == "teacher" and folder != "trash" %}
+-<a class="delete" href="/delete/{{ folder }}/{{ name }}">🗑</a>
+-{% endif %}
+-
+-{% if folder == "trash" %}
+-<a href="/restore/{{ name }}">♻ שחזר</a>
+-{% endif %}
+-</div>
+-{% endfor %}
+-</div>
+-
+-</div>
+-</div>
++          <div class="actions">
++            {% if item.type == 'file' %}
++              <a href="{{ url_for('download', stored_name=item.stored_name) }}">הורדה</a>
++            {% endif %}
+ 
++            {% if role == 'teacher' %}
++            <form method="POST" action="{{ url_for('move_to_trash') }}">
++              <input type="hidden" name="folder_path" value="{{ folder_path }}">
++              <input type="hidden" name="item_name" value="{{ item.name }}">
++              <button type="submit" class="danger">העבר לאשפה</button>
++            </form>
++            {% endif %}
++          </div>
++        </article>
++        {% else %}
++          <p>אין פריטים בתיקייה הזו.</p>
++        {% endfor %}
++      </section>
++      {% endif %}
++    </main>
++  </div>
+ </body>
+ </html>

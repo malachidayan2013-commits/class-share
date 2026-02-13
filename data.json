@@ -1,1 +1,15 @@
-{"root": {}}
+diff --git a/data.json b/data.json
+index 5d88338177bd577965f46ac64bca92bdf86d2b1a..e6f60aa5f08bec48bd0556b254e344dac8539cf4 100644
+--- a/data.json
++++ b/data.json
+@@ -1 +1,8 @@
+-{"root": {}}
+\ No newline at end of file
++{
++  "tree": {
++    "type": "folder",
++    "name": "root",
++    "children": {}
++  },
++  "trash": {}
++}
