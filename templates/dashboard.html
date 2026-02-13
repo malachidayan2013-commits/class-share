@@ -2,15 +2,19 @@
 <html>
 <head>
 <link rel="stylesheet" href="/static/style.css">
+<script src="/static/script.js"></script>
 </head>
 <body>
 
 <div class="sidebar">
     <a href="/dashboard?path=root">📁 הקבצים שלי</a>
+    <a href="/dashboard?view=trash">🗑 אשפה</a>
     <a href="/logout">🚪 יציאה</a>
 </div>
 
 <div class="content">
+
+{% if view == "files" %}
 
 <h3>{{ path }}</h3>
 
@@ -18,29 +22,38 @@
 <a href="/dashboard?path={{ '/'.join(path.split('/')[:-1]) }}">⬅ חזור</a>
 {% endif %}
 
-<hr>
-
 {% if role == "teacher" %}
+<button onclick="toggleNew()">➕ חדש</button>
+
+<div id="newBox" style="display:none;">
 <form method="post" action="/create" enctype="multipart/form-data">
-    <input type="hidden" name="path" value="{{ path }}">
+<input type="hidden" name="path" value="{{ path }}">
 
-    <select name="type">
-        <option value="folder">תיקייה</option>
-        <option value="file">קובץ</option>
-        <option value="link">קישור</option>
-    </select>
+<select name="type" onchange="showFields(this.value)">
+<option value="">בחר סוג</option>
+<option value="folder">תיקייה</option>
+<option value="file">קובץ</option>
+<option value="link">קישור</option>
+</select>
 
-    <input type="text" name="name" placeholder="שם">
+<div id="nameField" style="display:none;">
+<input type="text" name="name" placeholder="שם">
+</div>
 
-    <input type="file" name="file">
+<div id="fileField" style="display:none;">
+<input type="file" name="file">
+</div>
 
-    <input type="text" name="url" placeholder="URL">
+<div id="urlField" style="display:none;">
+<input type="text" name="url" placeholder="URL">
+</div>
 
-    <button type="submit">צור</button>
+<button type="submit">צור</button>
 </form>
+</div>
+{% endif %}
 
 <hr>
-{% endif %}
 
 <ul>
 {% for name, item in folder.children.items() %}
@@ -48,18 +61,48 @@
 
 {% if item.type == "folder" %}
 📁 <a href="/dashboard?path={{ path }}/{{ name }}">{{ name }}</a>
-
 {% elif item.type == "file" %}
-📄 {{ name }}
-<a href="/download/{{ name }}">⬇</a>
-
+📄 {{ name }} <a href="/download/{{ name }}">⬇</a>
 {% elif item.type == "link" %}
 🔗 <a href="{{ item.url }}" target="_blank">{{ name }}</a>
+{% endif %}
+
+{% if role == "teacher" %}
+<form method="post" action="/delete" style="display:inline;">
+<input type="hidden" name="path" value="{{ path }}">
+<input type="hidden" name="name" value="{{ name }}">
+<button>🗑</button>
+</form>
 {% endif %}
 
 </li>
 {% endfor %}
 </ul>
+
+{% elif view == "trash" %}
+
+<h3>אשפה</h3>
+
+<ul>
+{% for name, item in trash.items() %}
+<li>
+{{ name }}
+
+<form method="post" action="/restore" style="display:inline;">
+<input type="hidden" name="name" value="{{ name }}">
+<button>♻ שחזר</button>
+</form>
+
+<form method="post" action="/delete_forever" style="display:inline;">
+<input type="hidden" name="name" value="{{ name }}">
+<button>❌ מחק סופית</button>
+</form>
+
+</li>
+{% endfor %}
+</ul>
+
+{% endif %}
 
 </div>
 </body>

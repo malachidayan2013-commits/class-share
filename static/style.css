@@ -8,21 +8,31 @@ body {
     margin-top: 100px;
 }
 
+/* תפריט צד */
 .sidebar {
     width: 200px;
-    background: #e3f1f7;
+    background: #f1f5f9;   /* רקע בהיר במקום כהה */
     height: 100vh;
     float: left;
     padding: 20px;
 }
 
+/* קישורים בתפריט */
 .sidebar a {
-    color: white;
+    color: black;          /* 👈 עכשיו שחור */
     display: block;
     margin: 10px 0;
     text-decoration: none;
+    font-weight: bold;
 }
 
+.sidebar a:hover {
+    background: #e2e8f0;
+    padding: 5px;
+    border-radius: 6px;
+}
+
+/* תוכן */
 .content {
     margin-left: 220px;
     padding: 20px;
