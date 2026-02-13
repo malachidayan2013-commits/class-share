@@ -1,6 +1,6 @@
 body {
-    font-family: Arial;
     margin: 0;
+    font-family: Arial;
 }
 
 .center {
@@ -10,7 +10,7 @@ body {
 
 .sidebar {
     width: 200px;
-    background: #1e293b;
+    background: #cfe1ff;
     height: 100vh;
     float: left;
     padding: 20px;
