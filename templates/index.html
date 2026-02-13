@@ -1,99 +1,97 @@
 <!DOCTYPE html>
 <html lang="he">
 <head>
-    <meta charset="UTF-8">
-    <title>Drive</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<meta charset="UTF-8">
+<title>מערכת ניהול קבצים</title>
+<style>
+body { font-family: Arial; direction: rtl; margin:0; background:#f5f7fa; }
+.sidebar {
+    width: 200px;
+    background: #2c3e50;
+    color:white;
+    height:100vh;
+    float:right;
+    padding:20px;
+}
+.content {
+    margin-right:220px;
+    padding:20px;
+}
+button { padding:5px 10px; margin:5px; }
+.item { background:white; padding:10px; margin:10px 0; border-radius:8px; }
+a { text-decoration:none; color:#2980b9; }
+</style>
 </head>
 <body>
 
-<div class="container">
+<div class="sidebar">
+    <h3>תפריט</h3>
+    <a href="/">ראשי</a><br>
+    <a href="/folder/trash">אשפה</a><br><br>
 
-    <div class="sidebar">
-        <h2>📁 Drive</h2>
+    {% if role != "teacher" %}
+    <form action="/login" method="POST">
+        <input type="password" name="password" placeholder="סיסמת מורה">
+        <button type="submit">כניסה</button>
+    </form>
+    {% else %}
+    <a href="/logout">התנתק</a><br><br>
 
-        {% if role == "teacher" %}
-        <button onclick="toggleMenu()">+ חדש</button>
-
-        <div id="newMenu" style="display:none; margin-top:10px;">
-            <form action="/upload" method="POST" enctype="multipart/form-data">
-                <input type="file" name="file" required>
-                <button type="submit">📄 העלאת קובץ</button>
-            </form>
-            <br>
-            <form action="/create_folder" method="POST">
-                <input type="text" name="folder_name" placeholder="שם תיקייה" required>
-                <button type="submit">📁 צור תיקייה</button>
-            </form>
-            <br>
-            <form action="/create_link" method="POST">
-                <input type="text" name="link_name" placeholder="שם קישור" required><br>
-                <input type="text" name="url" placeholder="הכנס קישור" required><br>
-                <button type="submit">🔗 צור קישור</button>
-            </form>
-        </div>
-        {% endif %}
-
-        <ul>
-            <li>📂 הקבצים שלי</li>
-            <li>🗑️ אשפה</li>
-        </ul>
-
-        {% if role == "teacher" %}
-        <h4>שינוי סיסמה</h4>
-        <form action="/change_password" method="POST">
-            <input type="password" name="current_password" placeholder="נוכחית" required><br>
-            <input type="password" name="new_password" placeholder="חדשה" required><br>
-            <button type="submit">שנה</button>
-        </form>
-        {% endif %}
-
-        <br>
-        <a href="/logout">🚪 התנתקות</a>
-    </div>
-
-    <div class="main">
-        <h2>הקבצים שלי</h2>
-
-        {% for file in files %}
-        <div class="file-card">
-            📄 {{ file }}
-            <br>
-            <a href="/download/{{ file }}">⬇ הורדה</a>
-
-            {% if role == "teacher" %}
-            | <a href="/delete_file/{{ file }}">🗑 מחיקה</a>
-            <form action="/rename" method="POST" style="display:inline;">
-                <input type="hidden" name="old_name" value="{{ file }}">
-                <input type="text" name="new_name" placeholder="שם חדש" required>
-                <button type="submit">שנה שם</button>
-            </form>
-            {% endif %}
-        </div>
-        {% endfor %}
-
-        {% for link in links %}
-        <div class="file-card">
-            🔗 {{ link.name }}
-            <br>
-            <a href="{{ link.url }}" target="_blank">פתח</a>
-
-            {% if role == "teacher" %}
-            | <a href="/delete_link/{{ link.name }}">🗑 מחיקה</a>
-            {% endif %}
-        </div>
-        {% endfor %}
-
-    </div>
-
+    <form action="/change_password" method="POST">
+        <input type="password" name="current" placeholder="סיסמה נוכחית"><br>
+        <input type="password" name="new" placeholder="סיסמה חדשה"><br>
+        <button type="submit">שנה סיסמה</button>
+    </form>
+    {% endif %}
 </div>
 
-<script>
-function toggleMenu() {
-    var menu = document.getElementById("newMenu");
-    menu.style.display = menu.style.display === "none" ? "block" : "none";
-}
-</script>
+<div class="content">
+<h1>תיקייה: {{ folder_path }}</h1>
+
+{% if role == "teacher" %}
+<h3>חדש</h3>
+<form action="/create" method="POST" enctype="multipart/form-data">
+    <input type="hidden" name="folder_path" value="{{ folder_path }}">
+    <select name="type">
+        <option value="file">קובץ</option>
+        <option value="link">קישור</option>
+        <option value="folder">תיקייה</option>
+    </select><br>
+
+    שם: <input type="text" name="name"><br>
+    קובץ: <input type="file" name="file"><br>
+    URL (לקישור): <input type="text" name="url"><br>
+
+    <button type="submit">צור</button>
+</form>
+{% endif %}
+
+<hr>
+
+{% for name, item in items.items() %}
+<div class="item">
+    {% if item.type == "folder" %}
+        📁 <a href="/folder/{{ item.path }}">{{ name }}</a>
+    {% elif item.type == "file" %}
+        📄 {{ name }}
+        <a href="/download/{{ name }}">⬇ הורדה</a>
+    {% elif item.type == "link" %}
+        🔗 <a href="{{ item.url }}" target="_blank">{{ name }}</a>
+    {% endif %}
+
+    {% if role == "teacher" %}
+        <a href="/delete/{{ folder_path }}/{{ name }}">🗑 מחיקה</a>
+    {% endif %}
+</div>
+{% endfor %}
+
+{% if folder_path == "trash" %}
+    {% for name, item in items.items() %}
+        <a href="/restore/{{ name }}">♻ שחזר {{ name }}</a><br>
+    {% endfor %}
+{% endif %}
+
+</div>
 
 </body>
 </html>
