@@ -1,135 +1,70 @@
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
 body {
-    font-family: 'Segoe UI', sans-serif;
-    background-color: #f1f3f4;
+    margin: 0;
+    font-family: Arial;
     direction: rtl;
+    background: #f4f6f9;
 }
 
 .container {
     display: flex;
+}
+
+.sidebar {
+    width: 250px;
+    background: #1f2937;
+    color: white;
+    padding: 20px;
     height: 100vh;
 }
 
-/* ===== Sidebar ===== */
-
-.sidebar {
-    width: 240px;
-    background-color: white;
-    border-left: 1px solid #ddd;
-    padding: 20px;
-}
-
-.sidebar h2 {
-    margin-bottom: 30px;
-    color: #1a73e8;
-}
-
-.sidebar button {
-    width: 100%;
-    padding: 10px;
-    margin-bottom: 15px;
-    background-color: #1a73e8;
+.sidebar a {
+    display: block;
     color: white;
-    border: none;
-    border-radius: 24px;
-    cursor: pointer;
-    font-size: 14px;
+    margin: 10px 0;
+    text-decoration: none;
 }
-
-.sidebar ul {
-    list-style: none;
-}
-
-.sidebar li {
-    padding: 10px 0;
-    color: #444;
-    cursor: pointer;
-}
-
-.sidebar li:hover {
-    color: #1a73e8;
-}
-
-/* ===== Main Content ===== */
 
 .main {
     flex: 1;
     padding: 30px;
 }
 
-.header {
-    font-size: 22px;
-    margin-bottom: 30px;
-    color: #202124;
+.files {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, 200px);
+    gap: 20px;
 }
 
-.upload-form {
-    margin-bottom: 30px;
+.card {
+    background: white;
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
 }
 
-.upload-form input[type="file"] {
-    margin-bottom: 10px;
-}
-
-.upload-form button {
-    background-color: #1a73e8;
+button {
+    background: #2563eb;
     color: white;
     border: none;
-    padding: 8px 14px;
+    padding: 6px 12px;
     border-radius: 6px;
     cursor: pointer;
 }
 
-/* ===== File Cards ===== */
-
-.files-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 20px;
+.delete {
+    color: red;
 }
 
-.file-card {
-    background-color: white;
-    padding: 20px;
+.login-box {
+    background: white;
+    padding: 30px;
     border-radius: 12px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-    transition: 0.2s;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
 }
 
-.file-card:hover {
-    transform: translateY(-3px);
-}
-
-.file-name {
-    font-weight: bold;
-    margin-bottom: 15px;
-    word-wrap: break-word;
-}
-
-.file-actions a {
-    display: block;
-    text-decoration: none;
-    color: #1a73e8;
-    margin-bottom: 8px;
-}
-
-.rename-form input {
-    width: 100%;
-    padding: 5px;
-    margin-bottom: 5px;
-}
-
-.rename-form button {
-    width: 100%;
-    padding: 5px;
-    background-color: #34a853;
-    border: none;
-    color: white;
-    border-radius: 5px;
-    cursor: pointer;
+.center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
 }
