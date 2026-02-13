@@ -4,7 +4,7 @@ import shutil
 from flask import Flask, render_template, request, redirect, url_for, session, send_from_directory
 
 app = Flask(__name__)
-app.secret_key = "super_secret_key"
+app.secret_key = os.environ.get("SECRET_KEY", "fallback_secret")
 
 UPLOAD_FOLDER = "uploads"
 TRASH_FOLDER = "trash"
