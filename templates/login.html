@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="center">
+
+<h2>כניסה למערכת</h2>
+
+<form method="post" action="/login">
+    <button name="role" value="student">כניסת תלמיד</button>
+</form>
+
+<br>
+
+<form method="post" action="/login">
+    <input type="hidden" name="role" value="teacher">
+    <button type="button" onclick="togglePassword()">כניסת מורה</button>
+    <div id="passwordBox" style="display:none;">
+        <input type="password" name="password" placeholder="סיסמה">
+        <button type="submit">אישור</button>
+    </div>
+</form>
+
+{% if error %}
+<p style="color:red">{{ error }}</p>
+{% endif %}
+
+<script>
+function togglePassword() {
+    document.getElementById("passwordBox").style.display = "block";
+}
+</script>
+
+</body>
+</html>

@@ -1,36 +1,29 @@
 body {
     font-family: Arial;
-    background: #f4f6f9;
     margin: 0;
+}
+
+.center {
+    text-align: center;
+    margin-top: 100px;
+}
+
+.sidebar {
+    width: 200px;
+    background: #1e293b;
+    height: 100vh;
+    float: left;
     padding: 20px;
 }
 
-.topbar {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 20px;
-}
-
-button {
-    background: #1976d2;
+.sidebar a {
     color: white;
-    border: none;
-    padding: 6px 12px;
-    cursor: pointer;
+    display: block;
+    margin: 10px 0;
+    text-decoration: none;
 }
 
-button:hover {
-    background: #125ea2;
-}
-
-ul {
-    list-style: none;
-    padding: 0;
-}
-
-li {
-    background: white;
-    margin: 5px 0;
-    padding: 10px;
-    border-radius: 6px;
+.content {
+    margin-left: 220px;
+    padding: 20px;
 }

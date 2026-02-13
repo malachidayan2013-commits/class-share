@@ -9,16 +9,16 @@ app.secret_key = os.environ.get("SECRET_KEY", "fallback_secret")
 DATA_FILE = "data.json"
 PASSWORD_FILE = "password.txt"
 UPLOAD_FOLDER = "uploads"
-TRASH_FOLDER = "trash"
+TRASH_FOLDER = "trash_files"
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(TRASH_FOLDER, exist_ok=True)
 
-# ---------- עזרה ----------
+# ---------- DATA ----------
 
 def load_data():
     if not os.path.exists(DATA_FILE):
-        return {"root": []}
+        return {"root": [], "trash": []}
     with open(DATA_FILE, "r") as f:
         return json.load(f)
 
@@ -33,90 +33,134 @@ def get_password():
     with open(PASSWORD_FILE, "r") as f:
         return f.read().strip()
 
-# ---------- דפים ----------
+# ---------- LOGIN ----------
 
 @app.route("/")
-def index():
-    data = load_data()
-    folder = request.args.get("folder", "root")
-    items = data.get(folder, [])
-    return render_template("index.html",
-                           items=items,
-                           folder=folder,
-                           role=session.get("role"),
-                           trash=data.get("trash", []))
+def home():
+    if "role" not in session:
+        return render_template("login.html")
+    return redirect("/dashboard")
 
 @app.route("/login", methods=["POST"])
 def login():
-    password = request.form.get("password")
-    if password == get_password():
-        session["role"] = "teacher"
-    return redirect("/")
+    role = request.form.get("role")
+
+    if role == "student":
+        session["role"] = "student"
+
+    elif role == "teacher":
+        if request.form.get("password") == get_password():
+            session["role"] = "teacher"
+        else:
+            return render_template("login.html", error="סיסמה שגויה")
+
+    return redirect("/dashboard")
 
 @app.route("/logout")
 def logout():
     session.clear()
     return redirect("/")
 
-@app.route("/new", methods=["POST"])
-def new_item():
-    if session.get("role") != "teacher":
+# ---------- DASHBOARD ----------
+
+@app.route("/dashboard")
+def dashboard():
+    if "role" not in session:
         return redirect("/")
+    data = load_data()
+    view = request.args.get("view", "files")
+    return render_template("dashboard.html",
+                           role=session["role"],
+                           data=data,
+                           view=view)
+
+# ---------- CREATE ----------
+
+@app.route("/create", methods=["POST"])
+def create():
+    if session.get("role") != "teacher":
+        return redirect("/dashboard")
 
     data = load_data()
-    folder = request.form.get("folder")
     item_type = request.form.get("type")
     name = request.form.get("name")
 
     if item_type == "folder":
-        data[name] = []
-        data[folder].append({"type": "folder", "name": name})
+        data["root"].append({"type": "folder", "name": name})
 
     elif item_type == "link":
         url = request.form.get("url")
-        data[folder].append({"type": "link", "name": name, "url": url})
+        data["root"].append({"type": "link", "name": name, "url": url})
 
     elif item_type == "file":
         file = request.files["file"]
         if file:
             file.save(os.path.join(UPLOAD_FOLDER, file.filename))
-            data[folder].append({"type": "file", "name": file.filename})
+            data["root"].append({"type": "file", "name": file.filename})
 
     save_data(data)
-    return redirect(f"/?folder={folder}")
+    return redirect("/dashboard")
+
+# ---------- DELETE ----------
 
 @app.route("/delete", methods=["POST"])
 def delete():
     if session.get("role") != "teacher":
-        return redirect("/")
+        return redirect("/dashboard")
 
     data = load_data()
-    folder = request.form.get("folder")
     name = request.form.get("name")
 
-    item = next((i for i in data[folder] if i["name"] == name), None)
+    item = next((i for i in data["root"] if i["name"] == name), None)
     if item:
-        data[folder].remove(item)
-        data.setdefault("trash", []).append(item)
+        data["root"].remove(item)
+        data["trash"].append(item)
+
+        if item["type"] == "file":
+            shutil.move(os.path.join(UPLOAD_FOLDER, name),
+                        os.path.join(TRASH_FOLDER, name))
 
     save_data(data)
-    return redirect(f"/?folder={folder}")
+    return redirect("/dashboard")
 
 @app.route("/restore", methods=["POST"])
 def restore():
     if session.get("role") != "teacher":
-        return redirect("/")
+        return redirect("/dashboard?view=trash")
 
     data = load_data()
     name = request.form.get("name")
 
-    item = next((i for i in data.get("trash", []) if i["name"] == name), None)
+    item = next((i for i in data["trash"] if i["name"] == name), None)
     if item:
         data["trash"].remove(item)
         data["root"].append(item)
 
+        if item["type"] == "file":
+            shutil.move(os.path.join(TRASH_FOLDER, name),
+                        os.path.join(UPLOAD_FOLDER, name))
+
     save_data(data)
-    return redirect("/")
+    return redirect("/dashboard?view=trash")
+
+@app.route("/delete_forever", methods=["POST"])
+def delete_forever():
+    if session.get("role") != "teacher":
+        return redirect("/dashboard?view=trash")
+
+    data = load_data()
+    name = request.form.get("name")
+
+    item = next((i for i in data["trash"] if i["name"] == name), None)
+    if item:
+        data["trash"].remove(item)
+        if item["type"] == "file":
+            path = os.path.join(TRASH_FOLDER, name)
+            if os.path.exists(path):
+                os.remove(path)
+
+    save_data(data)
+    return redirect("/dashboard?view=trash")
 
 @app.route("/download/<filename>")
 def download(filename):

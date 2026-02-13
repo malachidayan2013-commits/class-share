@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="stylesheet" href="/static/style.css">
+<script src="/static/script.js"></script>
+</head>
+<body>
+
+<div class="sidebar">
+    <a href="/dashboard?view=files">📁 הקבצים שלי</a>
+    <a href="/dashboard?view=trash">🗑 אשפה</a>
+    <a href="/logout">🚪 יציאה</a>
+</div>
+
+<div class="content">
+
+{% if role == "teacher" %}
+<button onclick="toggleNew()">➕ חדש</button>
+
+<div id="newBox" style="display:none;">
+<form method="post" action="/create" enctype="multipart/form-data">
+<select name="type" onchange="showFields(this.value)">
+<option value="">בחר סוג</option>
+<option value="folder">תיקייה</option>
+<option value="file">קובץ</option>
+<option value="link">קישור</option>
+</select>
+
+<div id="nameField" style="display:none;">
+<input type="text" name="name" placeholder="שם">
+</div>
+
+<div id="fileField" style="display:none;">
+<input type="file" name="file">
+</div>
+
+<div id="urlField" style="display:none;">
+<input type="text" name="url" placeholder="URL">
+</div>
+
+<button type="submit">שמור</button>
+</form>
+</div>
+{% endif %}
+
+<hr>
+
+{% if view == "files" %}
+<ul>
+{% for item in data.root %}
+<li>
+{{ item.name }}
+
+{% if item.type == "file" %}
+<a href="/download/{{ item.name }}">⬇</a>
+{% elif item.type == "link" %}
+<a href="{{ item.url }}" target="_blank">🔗</a>
+{% endif %}
+
+{% if role == "teacher" %}
+<form method="post" action="/delete" style="display:inline;">
+<input type="hidden" name="name" value="{{ item.name }}">
+<button>🗑</button>
+</form>
+{% endif %}
+</li>
+{% endfor %}
+</ul>
+{% endif %}
+
+{% if view == "trash" %}
+<ul>
+{% for item in data.trash %}
+<li>
+{{ item.name }}
+
+{% if role == "teacher" %}
+<form method="post" action="/restore" style="display:inline;">
+<input type="hidden" name="name" value="{{ item.name }}">
+<button>♻</button>
+</form>
+
+<form method="post" action="/delete_forever" style="display:inline;">
+<input type="hidden" name="name" value="{{ item.name }}">
+<button>❌</button>
+</form>
+{% endif %}
+</li>
+{% endfor %}
+</ul>
+{% endif %}
+
+</div>
+</body>
+</html>
