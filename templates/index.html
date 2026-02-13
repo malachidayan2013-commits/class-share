@@ -2,95 +2,80 @@
 <html lang="he">
 <head>
 <meta charset="UTF-8">
-<title>מערכת ניהול קבצים</title>
-<style>
-body { font-family: Arial; direction: rtl; margin:0; background:#f5f7fa; }
-.sidebar {
-    width: 200px;
-    background: #2c3e50;
-    color:white;
-    height:100vh;
-    float:right;
-    padding:20px;
-}
-.content {
-    margin-right:220px;
-    padding:20px;
-}
-button { padding:5px 10px; margin:5px; }
-.item { background:white; padding:10px; margin:10px 0; border-radius:8px; }
-a { text-decoration:none; color:#2980b9; }
-</style>
+<title>מערכת קבצים</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
 
+<div class="container">
+
 <div class="sidebar">
-    <h3>תפריט</h3>
-    <a href="/">ראשי</a><br>
-    <a href="/folder/trash">אשפה</a><br><br>
+<h2>📁 מערכת קבצים</h2>
 
-    {% if role != "teacher" %}
-    <form action="/login" method="POST">
-        <input type="password" name="password" placeholder="סיסמת מורה">
-        <button type="submit">כניסה</button>
-    </form>
-    {% else %}
-    <a href="/logout">התנתק</a><br><br>
+<a href="/">ראשי</a>
+<a href="/folder/trash">🗑 אשפה</a>
 
-    <form action="/change_password" method="POST">
-        <input type="password" name="current" placeholder="סיסמה נוכחית"><br>
-        <input type="password" name="new" placeholder="סיסמה חדשה"><br>
-        <button type="submit">שנה סיסמה</button>
-    </form>
-    {% endif %}
-</div>
+{% if role != "teacher" %}
+<form action="/login" method="POST">
+<input type="password" name="password" placeholder="סיסמת מורה">
+<button>כניסה</button>
+</form>
+{% else %}
+<a href="/logout">התנתק</a>
 
-<div class="content">
-<h1>תיקייה: {{ folder_path }}</h1>
-
-{% if role == "teacher" %}
-<h3>חדש</h3>
-<form action="/create" method="POST" enctype="multipart/form-data">
-    <input type="hidden" name="folder_path" value="{{ folder_path }}">
-    <select name="type">
-        <option value="file">קובץ</option>
-        <option value="link">קישור</option>
-        <option value="folder">תיקייה</option>
-    </select><br>
-
-    שם: <input type="text" name="name"><br>
-    קובץ: <input type="file" name="file"><br>
-    URL (לקישור): <input type="text" name="url"><br>
-
-    <button type="submit">צור</button>
+<h4>שינוי סיסמה</h4>
+<form method="POST" action="/change_password">
+<input type="password" name="current" placeholder="נוכחית">
+<input type="password" name="new" placeholder="חדשה">
+<button>שנה</button>
 </form>
 {% endif %}
 
-<hr>
-
-{% for name, item in items.items() %}
-<div class="item">
-    {% if item.type == "folder" %}
-        📁 <a href="/folder/{{ item.path }}">{{ name }}</a>
-    {% elif item.type == "file" %}
-        📄 {{ name }}
-        <a href="/download/{{ name }}">⬇ הורדה</a>
-    {% elif item.type == "link" %}
-        🔗 <a href="{{ item.url }}" target="_blank">{{ name }}</a>
-    {% endif %}
-
-    {% if role == "teacher" %}
-        <a href="/delete/{{ folder_path }}/{{ name }}">🗑 מחיקה</a>
-    {% endif %}
 </div>
-{% endfor %}
 
-{% if folder_path == "trash" %}
-    {% for name, item in items.items() %}
-        <a href="/restore/{{ name }}">♻ שחזר {{ name }}</a><br>
-    {% endfor %}
+<div class="main">
+<h2>תיקייה: {{ folder }}</h2>
+
+{% if role == "teacher" %}
+<div class="new-box">
+<form method="POST" action="/create" enctype="multipart/form-data">
+<input type="hidden" name="folder" value="{{ folder }}">
+<select name="type">
+<option value="file">קובץ</option>
+<option value="link">קישור</option>
+<option value="folder">תיקייה</option>
+</select>
+<input type="text" name="name" placeholder="שם">
+<input type="file" name="file">
+<input type="text" name="url" placeholder="URL">
+<button>צור</button>
+</form>
+</div>
 {% endif %}
 
+<div class="files">
+{% for name, item in items.items() %}
+<div class="card">
+{% if item.type == "folder" %}
+📁 <a href="/folder/{{ item.path }}">{{ name }}</a>
+{% elif item.type == "file" %}
+📄 {{ name }} <a href="/download/{{ name }}">⬇</a>
+{% elif item.type == "link" %}
+🔗 <a href="{{ item.url }}" target="_blank">{{ name }}</a>
+{% endif %}
+
+{% if role == "teacher" and folder != "trash" %}
+<a class="delete" href="/delete/{{ folder }}/{{ name }}">🗑</a>
+{% endif %}
+
+{% if folder == "trash" %}
+<a href="/restore/{{ name }}">♻ שחזר</a>
+{% endif %}
+</div>
+{% endfor %}
+</div>
+
+</div>
 </div>
 
 </body>
