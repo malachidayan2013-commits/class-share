@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="he">
+<head>
+    <meta charset="UTF-8">
+    <title>מערכת קבצים</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body style="margin:0; direction:rtl; font-family:Arial;">
+
+<div style="display:flex; height:100vh;">
+
+    <!-- תפריט צד ימין -->
+    <div style="width:220px; background:#f4f4f4; padding:20px;">
+        <h3 style="color:black;">תפריט</h3>
+
+        <a href="/dashboard" style="color:black; display:block; margin:15px 0; text-decoration:none;">
+            קבצים זמינים
+        </a>
+
+        <a href="/dashboard?trash=1" style="color:black; display:block; margin:15px 0; text-decoration:none;">
+            אשפה
+        </a>
+    </div>
+
+    <!-- תוכן ראשי -->
+    <div style="flex:1; padding:30px;">
+        {% block content %}{% endblock %}
+    </div>
+
+</div>
+
+</body>
+</html>

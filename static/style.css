@@ -1,39 +1,28 @@
 body {
     margin: 0;
     font-family: Arial;
+    direction: rtl;
 }
 
-.center {
-    text-align: center;
-    margin-top: 100px;
-}
-
-/* תפריט צד */
 .sidebar {
-    width: 200px;
-    background: #f1f5f9;   /* רקע בהיר במקום כהה */
+    width: 220px;
+    background: #f1f5f9;
     height: 100vh;
-    float: left;
+    position: fixed;
+    right: 0;     /* 🔥 צד ימין */
+    top: 0;
     padding: 20px;
 }
 
-/* קישורים בתפריט */
 .sidebar a {
-    color: black;          /* 👈 עכשיו שחור */
     display: block;
+    color: black;
     margin: 10px 0;
     text-decoration: none;
     font-weight: bold;
 }
 
-.sidebar a:hover {
-    background: #e2e8f0;
-    padding: 5px;
-    border-radius: 6px;
-}
-
-/* תוכן */
 .content {
-    margin-left: 220px;
+    margin-right: 240px;  /* מרווח כי הסיידבר בימין */
     padding: 20px;
 }

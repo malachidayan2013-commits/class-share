@@ -1,109 +1,86 @@
-<!DOCTYPE html>
-<html>
-<head>
-<link rel="stylesheet" href="/static/style.css">
-<script src="/static/script.js"></script>
-</head>
-<body>
+{% extends "base.html" %}
+{% block content %}
 
-<div class="sidebar">
-    <a href="/dashboard?path=root">📁 הקבצים שלי</a>
-    <a href="/dashboard?view=trash">🗑 אשפה</a>
-    <a href="/logout">🚪 יציאה</a>
-</div>
-
-<div class="content">
-
-{% if view == "files" %}
-
-<h3>{{ path }}</h3>
-
-{% if path != "root" %}
-<a href="/dashboard?path={{ '/'.join(path.split('/')[:-1]) }}">⬅ חזור</a>
+<h2>
+קבצים זמינים
+{% if folder %}
+ / {{ folder }}
 {% endif %}
+</h2>
 
-{% if role == "teacher" %}
-<button onclick="toggleNew()">➕ חדש</button>
+<button onclick="toggleNew()">חדש</button>
 
 <div id="newBox" style="display:none;">
-<form method="post" action="/create" enctype="multipart/form-data">
-<input type="hidden" name="path" value="{{ path }}">
+    <form method="POST" action="/create" enctype="multipart/form-data">
+        <select name="type" id="typeSelect" onchange="changeType()">
+            <option value="folder">תיקייה</option>
+            <option value="link">קישור</option>
+            <option value="file">קובץ</option>
+        </select>
 
-<select name="type" onchange="showFields(this.value)">
-<option value="">בחר סוג</option>
-<option value="folder">תיקייה</option>
-<option value="file">קובץ</option>
-<option value="link">קישור</option>
-</select>
+        <input type="text" name="name" placeholder="שם" required>
 
-<div id="nameField" style="display:none;">
-<input type="text" name="name" placeholder="שם">
+        <div id="fileBox" style="display:none;">
+            <input type="file" name="file">
+        </div>
+
+        <div id="linkBox" style="display:none;">
+            <input type="text" name="url" placeholder="כתובת URL">
+        </div>
+
+        <button type="submit">צור</button>
+    </form>
 </div>
-
-<div id="fileField" style="display:none;">
-<input type="file" name="file">
-</div>
-
-<div id="urlField" style="display:none;">
-<input type="text" name="url" placeholder="URL">
-</div>
-
-<button type="submit">צור</button>
-</form>
-</div>
-{% endif %}
 
 <hr>
 
-<ul>
-{% for name, item in folder.children.items() %}
-<li>
+{% for item in files %}
+<div style="margin:10px 0;">
 
-{% if item.type == "folder" %}
-📁 <a href="/dashboard?path={{ path }}/{{ name }}">{{ name }}</a>
-{% elif item.type == "file" %}
-📄 {{ name }} <a href="/download/{{ name }}">⬇</a>
-{% elif item.type == "link" %}
-🔗 <a href="{{ item.url }}" target="_blank">{{ name }}</a>
-{% endif %}
+    <b>{{ item.name }}</b>
 
-{% if role == "teacher" %}
-<form method="post" action="/delete" style="display:inline;">
-<input type="hidden" name="path" value="{{ path }}">
-<input type="hidden" name="name" value="{{ name }}">
-<button>🗑</button>
-</form>
-{% endif %}
+    {% if item.type == "file" %}
+        <a href="/download/{{ item.filename }}">הורדה</a>
+    {% endif %}
 
-</li>
-{% endfor %}
-</ul>
+    {% if item.type == "link" %}
+        <a href="{{ item.url }}" target="_blank">פתח קישור</a>
+    {% endif %}
 
-{% elif view == "trash" %}
+    {% if item.type == "folder" %}
+        <a href="/dashboard?folder={{ item.name }}">פתח</a>
+    {% endif %}
 
-<h3>אשפה</h3>
+    <a href="/delete/{{ item.id }}">מחיקה</a>
 
-<ul>
-{% for name, item in trash.items() %}
-<li>
-{{ name }}
+    <form method="POST" action="/edit/{{ item.id }}" enctype="multipart/form-data">
+        <input type="text" name="name" value="{{ item.name }}" required>
 
-<form method="post" action="/restore" style="display:inline;">
-<input type="hidden" name="name" value="{{ name }}">
-<button>♻ שחזר</button>
-</form>
+        {% if item.type == "link" %}
+            <input type="text" name="url" value="{{ item.url }}">
+        {% endif %}
 
-<form method="post" action="/delete_forever" style="display:inline;">
-<input type="hidden" name="name" value="{{ name }}">
-<button>❌ מחק סופית</button>
-</form>
+        {% if item.type == "file" %}
+            <input type="file" name="file">
+        {% endif %}
 
-</li>
-{% endfor %}
-</ul>
-
-{% endif %}
+        <button type="submit">ערוך</button>
+    </form>
 
 </div>
-</body>
-</html>
+{% endfor %}
+
+<script>
+function toggleNew(){
+    var box = document.getElementById("newBox");
+    box.style.display = box.style.display === "none" ? "block" : "none";
+}
+
+function changeType(){
+    var type = document.getElementById("typeSelect").value;
+    document.getElementById("fileBox").style.display = type === "file" ? "block" : "none";
+    document.getElementById("linkBox").style.display = type === "link" ? "block" : "none";
+}
+</script>
+
+{% endblock %}

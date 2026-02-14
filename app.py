@@ -1,205 +1,104 @@
-from flask import Flask, render_template, request, redirect, session, send_from_directory
+from flask import Flask, render_template, request, redirect, url_for, session, send_file
 import os
 import json
-import shutil
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY", "fallback_secret")
+app.secret_key = "supersecret"
 
 DATA_FILE = "data.json"
-PASSWORD_FILE = "password.txt"
 UPLOAD_FOLDER = "uploads"
-TRASH_FOLDER = "trash_files"
 
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-os.makedirs(TRASH_FOLDER, exist_ok=True)
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
 
-# ---------------- DATA ----------------
+if not os.path.exists(DATA_FILE):
+    with open(DATA_FILE, "w") as f:
+        json.dump({"files": [], "trash": []}, f)
 
 def load_data():
-    if not os.path.exists(DATA_FILE):
-        return {
-            "root": {"type": "folder", "children": {}},
-            "trash": {}
-        }
-    with open(DATA_FILE, "r", encoding="utf-8") as f:
+    with open(DATA_FILE) as f:
         return json.load(f)
 
 def save_data(data):
-    with open(DATA_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=4, ensure_ascii=False)
-
-def get_password():
-    if not os.path.exists(PASSWORD_FILE):
-        with open(PASSWORD_FILE, "w") as f:
-            f.write("1234")
-    with open(PASSWORD_FILE, "r") as f:
-        return f.read().strip()
-
-def get_folder_by_path(data, path):
-    parts = path.split("/")
-    current = None
-    for part in parts:
-        if part == "root":
-            current = data["root"]
-        else:
-            current = current["children"].get(part)
-        if not current or current["type"] != "folder":
-            return None
-    return current
-
-def get_parent_path(path):
-    parts = path.split("/")
-    if len(parts) <= 1:
-        return None
-    return "/".join(parts[:-1])
-
-# ---------------- LOGIN ----------------
+    with open(DATA_FILE, "w") as f:
+        json.dump(data, f, indent=4)
 
 @app.route("/")
 def home():
-    if "role" not in session:
-        return render_template("login.html")
-    return redirect("/dashboard")
-
-@app.route("/login", methods=["POST"])
-def login():
-    role = request.form.get("role")
-    if role == "student":
-        session["role"] = "student"
-    elif role == "teacher":
-        if request.form.get("password") == get_password():
-            session["role"] = "teacher"
-        else:
-            return render_template("login.html", error="סיסמה שגויה")
-    return redirect("/dashboard")
-
-@app.route("/logout")
-def logout():
-    session.clear()
-    return redirect("/")
-
-# ---------------- DASHBOARD ----------------
+    return render_template("login.html")
 
 @app.route("/dashboard")
 def dashboard():
-    if "role" not in session:
-        return redirect("/")
-
     data = load_data()
-    path = request.args.get("path", "root")
-    view = request.args.get("view", "files")
-
-    if view == "trash":
-        return render_template(
-            "dashboard.html",
-            role=session["role"],
-            trash=data["trash"],
-            view="trash"
-        )
-
-    folder = get_folder_by_path(data, path)
-    if not folder:
-        return redirect("/dashboard?path=root")
-
-    return render_template(
-        "dashboard.html",
-        role=session["role"],
-        folder=folder,
-        path=path,
-        view="files"
-    )
-
-# ---------------- CREATE ----------------
+    folder = request.args.get("folder", "")
+    return render_template("dashboard.html", 
+                           files=data["files"],
+                           trash=data["trash"],
+                           folder=folder)
 
 @app.route("/create", methods=["POST"])
 def create():
-    if session.get("role") != "teacher":
-        return redirect("/dashboard")
-
     data = load_data()
-    path = request.form.get("path")
-    folder = get_folder_by_path(data, path)
+    item_type = request.form["type"]
+    name = request.form["name"]
 
-    item_type = request.form.get("type")
-    name = request.form.get("name")
-
-    if item_type == "folder":
-        folder["children"][name] = {"type": "folder", "children": {}}
-
-    elif item_type == "link":
-        url = request.form.get("url")
-        folder["children"][name] = {"type": "link", "url": url}
-
-    elif item_type == "file":
-        file = request.files["file"]
-        if file:
-            file.save(os.path.join(UPLOAD_FOLDER, file.filename))
-            folder["children"][file.filename] = {"type": "file"}
-
-    save_data(data)
-    return redirect(f"/dashboard?path={path}")
-
-# ---------------- DELETE TO TRASH ----------------
-
-@app.route("/delete", methods=["POST"])
-def delete():
-    if session.get("role") != "teacher":
-        return redirect("/dashboard")
-
-    data = load_data()
-    path = request.form.get("path")
-    name = request.form.get("name")
-
-    parent = get_folder_by_path(data, path)
-    item = parent["children"].pop(name)
-
-    data["trash"][name] = {
-        "data": item,
-        "original_path": path
+    new_item = {
+        "id": len(data["files"]) + 1,
+        "type": item_type,
+        "name": name,
+        "folder": request.form.get("folder", "")
     }
 
+    if item_type == "file":
+        file = request.files["file"]
+        filename = secure_filename(file.filename)
+        file.save(os.path.join(UPLOAD_FOLDER, filename))
+        new_item["filename"] = filename
+
+    if item_type == "link":
+        new_item["url"] = request.form["url"]
+
+    data["files"].append(new_item)
     save_data(data)
-    return redirect(f"/dashboard?path={path}")
 
-# ---------------- RESTORE ----------------
+    return redirect(url_for("dashboard"))
 
-@app.route("/restore", methods=["POST"])
-def restore():
-    if session.get("role") != "teacher":
-        return redirect("/dashboard?view=trash")
-
+@app.route("/delete/<int:item_id>")
+def delete(item_id):
     data = load_data()
-    name = request.form.get("name")
-
-    item_info = data["trash"].pop(name)
-    original_path = item_info["original_path"]
-
-    parent = get_folder_by_path(data, original_path)
-    parent["children"][name] = item_info["data"]
-
+    for item in data["files"]:
+        if item["id"] == item_id:
+            data["files"].remove(item)
+            data["trash"].append(item)
+            break
     save_data(data)
-    return redirect("/dashboard?view=trash")
-
-# ---------------- DELETE FOREVER ----------------
-
-@app.route("/delete_forever", methods=["POST"])
-def delete_forever():
-    if session.get("role") != "teacher":
-        return redirect("/dashboard?view=trash")
-
-    data = load_data()
-    name = request.form.get("name")
-    data["trash"].pop(name)
-
-    save_data(data)
-    return redirect("/dashboard?view=trash")
-
-# ---------------- DOWNLOAD ----------------
+    return redirect(url_for("dashboard"))
 
 @app.route("/download/<filename>")
 def download(filename):
-    return send_from_directory(UPLOAD_FOLDER, filename)
+    return send_file(os.path.join(UPLOAD_FOLDER, filename), as_attachment=True)
+
+@app.route("/edit/<int:item_id>", methods=["POST"])
+def edit(item_id):
+    data = load_data()
+    for item in data["files"]:
+        if item["id"] == item_id:
+            item["name"] = request.form["name"]
+
+            if item["type"] == "link":
+                item["url"] = request.form["url"]
+
+            if item["type"] == "file" and "file" in request.files:
+                file = request.files["file"]
+                if file.filename != "":
+                    filename = secure_filename(file.filename)
+                    file.save(os.path.join(UPLOAD_FOLDER, filename))
+                    item["filename"] = filename
+            break
+
+    save_data(data)
+    return redirect(url_for("dashboard"))
 
 if __name__ == "__main__":
     app.run(debug=True)
