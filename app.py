@@ -1,104 +1,112 @@
-from flask import Flask, render_template, request, redirect, url_for, session, send_file
 import os
 import json
-from werkzeug.utils import secure_filename
+from flask import Flask, render_template, request, redirect, url_for, session, send_from_directory
 
 app = Flask(__name__)
-app.secret_key = "supersecret"
+app.secret_key = "12345"
 
-DATA_FILE = "data.json"
 UPLOAD_FOLDER = "uploads"
+DATA_FILE = "data.json"
 
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
 if not os.path.exists(DATA_FILE):
     with open(DATA_FILE, "w") as f:
-        json.dump({"files": [], "trash": []}, f)
+        json.dump([], f)
+
 
 def load_data():
-    with open(DATA_FILE) as f:
+    with open(DATA_FILE, "r") as f:
         return json.load(f)
+
 
 def save_data(data):
     with open(DATA_FILE, "w") as f:
         json.dump(data, f, indent=4)
 
+
 @app.route("/")
 def home():
     return render_template("login.html")
 
+
+@app.route("/login", methods=["POST"])
+def login():
+    role = request.form.get("role")
+    password = request.form.get("password")
+
+    if role == "teacher" and password == "1234":
+        session["role"] = "teacher"
+        return redirect(url_for("dashboard"))
+
+    if role == "student":
+        session["role"] = "student"
+        return redirect(url_for("dashboard"))
+
+    return redirect(url_for("home"))
+
+
 @app.route("/dashboard")
 def dashboard():
     data = load_data()
-    folder = request.args.get("folder", "")
-    return render_template("dashboard.html", 
-                           files=data["files"],
-                           trash=data["trash"],
-                           folder=folder)
+    trash_mode = request.args.get("trash")
 
-@app.route("/create", methods=["POST"])
-def create():
-    data = load_data()
-    item_type = request.form["type"]
-    name = request.form["name"]
+    if trash_mode:
+        items = [x for x in data if x.get("deleted")]
+    else:
+        items = [x for x in data if not x.get("deleted")]
 
-    new_item = {
-        "id": len(data["files"]) + 1,
-        "type": item_type,
-        "name": name,
-        "folder": request.form.get("folder", "")
-    }
+    return render_template("dashboard.html", items=items, trash=trash_mode)
 
-    if item_type == "file":
-        file = request.files["file"]
-        filename = secure_filename(file.filename)
-        file.save(os.path.join(UPLOAD_FOLDER, filename))
-        new_item["filename"] = filename
 
-    if item_type == "link":
-        new_item["url"] = request.form["url"]
+@app.route("/upload", methods=["POST"])
+def upload():
+    if session.get("role") != "teacher":
+        return redirect(url_for("dashboard"))
 
-    data["files"].append(new_item)
-    save_data(data)
+    name = request.form.get("name")
+    file = request.files.get("file")
+
+    if file:
+        file.save(os.path.join(UPLOAD_FOLDER, file.filename))
+
+        data = load_data()
+        data.append({
+            "id": len(data) + 1,
+            "name": name,
+            "filename": file.filename,
+            "deleted": False
+        })
+        save_data(data)
 
     return redirect(url_for("dashboard"))
+
+
+@app.route("/download/<filename>")
+def download(filename):
+    return send_from_directory(UPLOAD_FOLDER, filename, as_attachment=True)
+
 
 @app.route("/delete/<int:item_id>")
 def delete(item_id):
     data = load_data()
-    for item in data["files"]:
+    for item in data:
         if item["id"] == item_id:
-            data["files"].remove(item)
-            data["trash"].append(item)
-            break
+            item["deleted"] = True
     save_data(data)
     return redirect(url_for("dashboard"))
 
-@app.route("/download/<filename>")
-def download(filename):
-    return send_file(os.path.join(UPLOAD_FOLDER, filename), as_attachment=True)
 
-@app.route("/edit/<int:item_id>", methods=["POST"])
-def edit(item_id):
+@app.route("/restore/<int:item_id>")
+def restore(item_id):
     data = load_data()
-    for item in data["files"]:
+    for item in data:
         if item["id"] == item_id:
-            item["name"] = request.form["name"]
-
-            if item["type"] == "link":
-                item["url"] = request.form["url"]
-
-            if item["type"] == "file" and "file" in request.files:
-                file = request.files["file"]
-                if file.filename != "":
-                    filename = secure_filename(file.filename)
-                    file.save(os.path.join(UPLOAD_FOLDER, filename))
-                    item["filename"] = filename
-            break
-
+            item["deleted"] = False
     save_data(data)
-    return redirect(url_for("dashboard"))
+    return redirect(url_for("dashboard", trash=1))
+
 
 if __name__ == "__main__":
     app.run(debug=True)
