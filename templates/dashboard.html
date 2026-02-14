@@ -8,6 +8,12 @@
 
 <div class="sidebar">
     <a href="/dashboard?path=root">📁 קבצים זמינים</a>
+
+    {% if role == "teacher" %}
+    <a href="/trash">🗑 אשפה</a>
+    <a href="/change_password">🔐 שינוי סיסמה</a>
+    {% endif %}
+
     <a href="/logout">🚪 יציאה</a>
 </div>
 
@@ -68,10 +74,18 @@
 
 {% if item.type == "folder" %}
 📁 <a href="/dashboard?path={{ path }}/{{ name }}">{{ name }}</a>
+
 {% elif item.type == "file" %}
-📄 {{ name }} <a href="/download/{{ name }}">⬇</a>
+📄 {{ name }} 
+<a href="/download/{{ name }}">⬇</a>
+
 {% elif item.type == "link" %}
 🔗 <a href="{{ item.url }}" target="_blank">{{ name }}</a>
+
+{% endif %}
+
+{% if role == "teacher" %}
+<a href="/delete?path={{ path }}&name={{ name }}">🗑</a>
 {% endif %}
 
 </li>

@@ -1,25 +1,7 @@
 {
     "root": {
         "type": "folder",
-        "children": {
-            "מלאכי": {
-                "type": "folder",
-                "children": {
-                    "מלאכי": {
-                        "type": "folder",
-                        "children": {
-                            "home": {
-                                "type": "file"
-                            }
-                        }
-                    }
-                }
-            },
-            "יוטיוב": {
-                "type": "link",
-                "url": "https://www.youtube.com"
-            }
-        }
+        "children": {}
     },
     "trash": {}
 }

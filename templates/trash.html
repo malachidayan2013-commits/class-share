@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<div class="sidebar">
+    <a href="/dashboard?path=root">📁 קבצים</a>
+    <a href="/trash">🗑 אשפה</a>
+    <a href="/logout">🚪 יציאה</a>
+</div>
+
+<div class="content">
+
+<h3>אשפה</h3>
+
+<a href="/empty_trash">❌ ריקון אשפה</a>
+
+<ul>
+{% for name, item in trash.items() %}
+<li>
+{{ name }}
+<a href="/restore/{{ name }}">♻ שחזר</a>
+</li>
+{% endfor %}
+</ul>
+
+</div>
+</body>
+</html>

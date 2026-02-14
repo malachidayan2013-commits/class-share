@@ -55,7 +55,7 @@ def get_folder_by_path(data, path):
 def home():
     if "role" not in session:
         return render_template("login.html")
-    return redirect("/dashboard")
+    return redirect("/dashboard?path=root")
 
 @app.route("/login", methods=["POST"])
 def login():
@@ -67,7 +67,7 @@ def login():
             session["role"] = "teacher"
         else:
             return render_template("login.html", error="סיסמה שגויה")
-    return redirect("/dashboard")
+    return redirect("/dashboard?path=root")
 
 @app.route("/logout")
 def logout():
@@ -100,7 +100,7 @@ def dashboard():
 @app.route("/create", methods=["POST"])
 def create():
     if session.get("role") != "teacher":
-        return redirect("/dashboard")
+        return redirect("/dashboard?path=root")
 
     data = load_data()
     path = request.form.get("path")
@@ -125,15 +125,84 @@ def create():
     save_data(data)
     return redirect(f"/dashboard?path={path}")
 
+# ---------------- DELETE → TRASH ----------------
+
+@app.route("/delete")
+def delete():
+    if session.get("role") != "teacher":
+        return redirect("/dashboard?path=root")
+
+    data = load_data()
+    path = request.args.get("path")
+    name = request.args.get("name")
+
+    folder = get_folder_by_path(data, path)
+
+    if name in folder["children"]:
+        data["trash"][name] = folder["children"][name]
+        del folder["children"][name]
+        save_data(data)
+
+    return redirect(f"/dashboard?path={path}")
+
+# ---------------- TRASH PAGE ----------------
+
+@app.route("/trash")
+def trash_page():
+    if session.get("role") != "teacher":
+        return redirect("/dashboard?path=root")
+
+    data = load_data()
+    return render_template("trash.html", trash=data["trash"])
+
+# ---------------- RESTORE ----------------
+
+@app.route("/restore/<name>")
+def restore(name):
+    if session.get("role") != "teacher":
+        return redirect("/dashboard?path=root")
+
+    data = load_data()
+
+    if name in data["trash"]:
+        data["root"]["children"][name] = data["trash"][name]
+        del data["trash"][name]
+        save_data(data)
+
+    return redirect("/trash")
+
+# ---------------- EMPTY TRASH ----------------
+
+@app.route("/empty_trash")
+def empty_trash():
+    if session.get("role") != "teacher":
+        return redirect("/dashboard?path=root")
+
+    data = load_data()
+    data["trash"] = {}
+    save_data(data)
+
+    return redirect("/trash")
+
+# ---------------- CHANGE PASSWORD ----------------
+
+@app.route("/change_password", methods=["GET", "POST"])
+def change_password():
+    if session.get("role") != "teacher":
+        return redirect("/dashboard?path=root")
+
+    if request.method == "POST":
+        new_password = request.form.get("new_password")
+        set_password(new_password)
+        return redirect("/dashboard?path=root")
+
+    return render_template("change_password.html")
+
 # ---------------- DOWNLOAD ----------------
 
 @app.route("/download/<filename>")
 def download(filename):
-    return send_from_directory(
-        UPLOAD_FOLDER,
-        filename,
-        as_attachment=True   # 🔥 גורם להורדה ולא לפתיחה בדפדפן
-    )
+    return send_from_directory(UPLOAD_FOLDER, filename, as_attachment=True)
 
 if __name__ == "__main__":
     app.run(debug=True)
