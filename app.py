@@ -125,6 +125,88 @@ def create():
     save_data(data)
     return redirect(f"/dashboard?path={path}")
 
+# ---------------- EDIT ----------------
+
+@app.route("/edit")
+def edit_page():
+    if session.get("role") != "teacher":
+        return redirect("/dashboard?path=root")
+
+    data = load_data()
+    path = request.args.get("path")
+    name = request.args.get("name")
+
+    folder = get_folder_by_path(data, path)
+    item = folder["children"].get(name)
+
+    if not item:
+        return redirect(f"/dashboard?path={path}")
+
+    return render_template(
+        "edit.html",
+        item=item,
+        name=name,
+        path=path
+    )
+
+
+@app.route("/update", methods=["POST"])
+def update():
+    if session.get("role") != "teacher":
+        return redirect("/dashboard?path=root")
+
+    data = load_data()
+    path = request.form.get("path")
+    old_name = request.form.get("old_name")
+    new_name = request.form.get("new_name")
+
+    folder = get_folder_by_path(data, path)
+    item = folder["children"].get(old_name)
+
+    if not item:
+        return redirect(f"/dashboard?path={path}")
+
+    # ---- תיקייה ----
+    if item["type"] == "folder":
+        folder["children"][new_name] = item
+        if new_name != old_name:
+            del folder["children"][old_name]
+
+    # ---- קישור ----
+    elif item["type"] == "link":
+        item["url"] = request.form.get("url")
+        folder["children"][new_name] = item
+        if new_name != old_name:
+            del folder["children"][old_name]
+
+    # ---- קובץ ----
+    elif item["type"] == "file":
+        uploaded_file = request.files.get("file")
+
+        if uploaded_file and uploaded_file.filename != "":
+            # מוחק קובץ ישן פיזית
+            old_path = os.path.join(UPLOAD_FOLDER, old_name)
+            if os.path.exists(old_path):
+                os.remove(old_path)
+
+            uploaded_file.save(os.path.join(UPLOAD_FOLDER, new_name))
+
+        else:
+            # רק שינוי שם
+            old_path = os.path.join(UPLOAD_FOLDER, old_name)
+            new_path = os.path.join(UPLOAD_FOLDER, new_name)
+            if os.path.exists(old_path) and new_name != old_name:
+                os.rename(old_path, new_path)
+
+        folder["children"][new_name] = {"type": "file"}
+
+        if new_name != old_name:
+            del folder["children"][old_name]
+
+    save_data(data)
+    return redirect(f"/dashboard?path={path}")
+
+
 # ---------------- DELETE → TRASH ----------------
 
 @app.route("/delete")

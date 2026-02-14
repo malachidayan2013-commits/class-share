@@ -1,28 +1,115 @@
 body {
     margin: 0;
-    font-family: Arial;
+    font-family: "Segoe UI", Arial;
     direction: rtl;
+    background-color: #ffffff;
 }
 
+/* ===== SIDEBAR ===== */
+
 .sidebar {
-    width: 220px;
-    background: #f1f5f9;
+    width: 230px;
+    background: #ebebeb;
     height: 100vh;
     position: fixed;
-    right: 0;     /* 🔥 צד ימין */
+    right: 0;
     top: 0;
     padding: 20px;
+    color: rgb(255, 255, 255);
+}
+
+.sidebar h3 {
+    color: #38bdf8;
 }
 
 .sidebar a {
     display: block;
-    color: black;
-    margin: 10px 0;
+    color: #000000;
+    margin: 12px 0;
     text-decoration: none;
-    font-weight: bold;
+    padding: 8px;
+    border-radius: 6px;
+    transition: 0.2s;
 }
 
+.sidebar a:hover {
+    background: #587399;
+}
+
+/* ===== CONTENT ===== */
+
 .content {
-    margin-right: 240px;  /* מרווח כי הסיידבר בימין */
+    margin-right: 250px;
+    padding: 30px;
+}
+
+/* ===== CARDS ===== */
+
+.card {
+    background: white;
+    padding: 15px 20px;
+    margin-bottom: 15px;
+    border-radius: 10px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.card span {
+    font-weight: 500;
+}
+
+/* ===== BUTTONS ===== */
+
+button, .btn {
+    background: #2563eb;
+    color: white;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: 0.2s;
+    text-decoration: none;
+}
+
+button:hover, .btn:hover {
+    background: #1d4ed8;
+}
+
+.btn-danger {
+    background: #dc2626;
+}
+
+.btn-danger:hover {
+    background: #b91c1c;
+}
+
+.btn-edit {
+    background: #f59e0b;
+}
+
+.btn-edit:hover {
+    background: #d97706;
+}
+
+/* ===== FORMS ===== */
+
+input[type="text"],
+input[type="password"],
+input[type="file"] {
+    width: 100%;
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+    margin-top: 5px;
+    margin-bottom: 15px;
+}
+
+form {
+    background: white;
     padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+    max-width: 500px;
 }

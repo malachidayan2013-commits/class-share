@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<div class="sidebar">
+    <a href="/dashboard?path={{ path }}">⬅ חזרה</a>
+</div>
+
+<div class="content">
+
+<h3>עריכת {{ name }}</h3>
+
+<form method="post" action="/update" enctype="multipart/form-data">
+
+<input type="hidden" name="path" value="{{ path }}">
+<input type="hidden" name="old_name" value="{{ name }}">
+
+<label>שם חדש:</label>
+<br>
+<input type="text" name="new_name" value="{{ name }}">
+<br><br>
+
+{% if item.type == "link" %}
+<label>URL חדש:</label>
+<br>
+<input type="text" name="url" value="{{ item.url }}">
+<br><br>
+{% endif %}
+
+{% if item.type == "file" %}
+<label>החלף קובץ (לא חובה):</label>
+<br>
+<input type="file" name="file">
+<br><br>
+{% endif %}
+
+<button type="submit">שמור שינויים</button>
+
+</form>
+
+</div>
+</body>
+</html>

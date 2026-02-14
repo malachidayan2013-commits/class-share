@@ -1,7 +1,20 @@
 {
     "root": {
         "type": "folder",
-        "children": {}
+        "children": {
+            "יוטיוב": {
+                "type": "link",
+                "url": "https://www.youtube.com"
+            },
+            "מלאכי": {
+                "type": "folder",
+                "children": {
+                    "אייקון האתגר של צ'יפ": {
+                        "type": "file"
+                    }
+                }
+            }
+        }
     },
     "trash": {}
 }
