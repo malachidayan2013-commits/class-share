@@ -5,18 +5,19 @@
             "מלאכי": {
                 "type": "folder",
                 "children": {
-                    "יוטיוב": {
-                        "type": "link",
-                        "url": "https://www.youtube.com"
-                    },
-                    "אייקון האתגר של צ'יפ": {
-                        "type": "file"
-                    },
-                    "home": {
+                    "מלאכי": {
                         "type": "folder",
-                        "children": {}
+                        "children": {
+                            "home": {
+                                "type": "file"
+                            }
+                        }
                     }
                 }
+            },
+            "יוטיוב": {
+                "type": "link",
+                "url": "https://www.youtube.com"
             }
         }
     },

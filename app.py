@@ -1,112 +1,139 @@
+from flask import Flask, render_template, request, redirect, session, send_from_directory
 import os
 import json
-from flask import Flask, render_template, request, redirect, url_for, session, send_from_directory
 
 app = Flask(__name__)
-app.secret_key = "12345"
+app.secret_key = os.environ.get("SECRET_KEY", "fallback_secret")
 
-UPLOAD_FOLDER = "uploads"
 DATA_FILE = "data.json"
+PASSWORD_FILE = "password.txt"
+UPLOAD_FOLDER = "uploads"
 
-if not os.path.exists(UPLOAD_FOLDER):
-    os.makedirs(UPLOAD_FOLDER)
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-if not os.path.exists(DATA_FILE):
-    with open(DATA_FILE, "w", encoding="utf-8") as f:
-        json.dump([], f)
-
+# ---------------- DATA ----------------
 
 def load_data():
+    if not os.path.exists(DATA_FILE):
+        return {
+            "root": {"type": "folder", "children": {}},
+            "trash": {}
+        }
     with open(DATA_FILE, "r", encoding="utf-8") as f:
         return json.load(f)
 
-
 def save_data(data):
     with open(DATA_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=4)
+        json.dump(data, f, indent=4, ensure_ascii=False)
 
+def get_password():
+    if not os.path.exists(PASSWORD_FILE):
+        with open(PASSWORD_FILE, "w") as f:
+            f.write("1234")
+    with open(PASSWORD_FILE, "r") as f:
+        return f.read().strip()
+
+def set_password(new_password):
+    with open(PASSWORD_FILE, "w") as f:
+        f.write(new_password)
+
+def get_folder_by_path(data, path):
+    parts = path.split("/")
+    current = None
+    for part in parts:
+        if part == "root":
+            current = data["root"]
+        else:
+            current = current["children"].get(part)
+        if not current or current["type"] != "folder":
+            return None
+    return current
+
+# ---------------- LOGIN ----------------
 
 @app.route("/")
 def home():
-    return render_template("login.html")
-
+    if "role" not in session:
+        return render_template("login.html")
+    return redirect("/dashboard")
 
 @app.route("/login", methods=["POST"])
 def login():
     role = request.form.get("role")
-    password = request.form.get("password")
-
-    if role == "teacher" and password == "1234":
-        session["role"] = "teacher"
-        return redirect(url_for("dashboard"))
-
     if role == "student":
         session["role"] = "student"
-        return redirect(url_for("dashboard"))
+    elif role == "teacher":
+        if request.form.get("password") == get_password():
+            session["role"] = "teacher"
+        else:
+            return render_template("login.html", error="סיסמה שגויה")
+    return redirect("/dashboard")
 
-    return redirect(url_for("home"))
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect("/")
 
+# ---------------- DASHBOARD ----------------
 
 @app.route("/dashboard")
 def dashboard():
+    if "role" not in session:
+        return redirect("/")
+
     data = load_data()
-    trash_mode = request.args.get("trash")
+    path = request.args.get("path", "root")
+    folder = get_folder_by_path(data, path)
 
-    if trash_mode:
-        items = [x for x in data if x.get("deleted")]
-    else:
-        items = [x for x in data if not x.get("deleted")]
+    if not folder:
+        return redirect("/dashboard?path=root")
 
-    return render_template("dashboard.html", items=items, trash=trash_mode)
+    return render_template(
+        "dashboard.html",
+        role=session["role"],
+        folder=folder,
+        path=path
+    )
 
+# ---------------- CREATE ----------------
 
-@app.route("/upload", methods=["POST"])
-def upload():
+@app.route("/create", methods=["POST"])
+def create():
     if session.get("role") != "teacher":
-        return redirect(url_for("dashboard"))
+        return redirect("/dashboard")
 
+    data = load_data()
+    path = request.form.get("path")
+    folder = get_folder_by_path(data, path)
+
+    item_type = request.form.get("type")
     name = request.form.get("name")
-    file = request.files.get("file")
 
-    if file:
-        file.save(os.path.join(UPLOAD_FOLDER, file.filename))
+    if item_type == "folder":
+        folder["children"][name] = {"type": "folder", "children": {}}
 
-        data = load_data()
-        data.append({
-            "id": len(data) + 1,
-            "name": name,
-            "filename": file.filename,
-            "deleted": False
-        })
-        save_data(data)
+    elif item_type == "link":
+        url = request.form.get("url")
+        folder["children"][name] = {"type": "link", "url": url}
 
-    return redirect(url_for("dashboard"))
+    elif item_type == "file":
+        file = request.files["file"]
+        if file:
+            file.save(os.path.join(UPLOAD_FOLDER, name))
+            folder["children"][name] = {"type": "file"}
 
+    save_data(data)
+    return redirect(f"/dashboard?path={path}")
+
+# ---------------- DOWNLOAD ----------------
 
 @app.route("/download/<filename>")
 def download(filename):
-    return send_from_directory(UPLOAD_FOLDER, filename, as_attachment=True)
-
-
-@app.route("/delete/<int:item_id>")
-def delete(item_id):
-    data = load_data()
-    for item in data:
-        if item["id"] == item_id:
-            item["deleted"] = True
-    save_data(data)
-    return redirect(url_for("dashboard"))
-
-
-@app.route("/restore/<int:item_id>")
-def restore(item_id):
-    data = load_data()
-    for item in data:
-        if item["id"] == item_id:
-            item["deleted"] = False
-    save_data(data)
-    return redirect(url_for("dashboard", trash=1))
-
+    return send_from_directory(
+        UPLOAD_FOLDER,
+        filename,
+        as_attachment=True   # 🔥 גורם להורדה ולא לפתיחה בדפדפן
+    )
 
 if __name__ == "__main__":
     app.run(debug=True)

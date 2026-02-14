@@ -1,19 +1,36 @@
 <!DOCTYPE html>
-<html lang="he">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>כניסה</title>
+<link rel="stylesheet" href="/static/style.css">
 </head>
-<body style="direction:rtl; font-family:Arial; text-align:center; margin-top:100px;">
+<body class="center">
 
-<h2>כניסה למערכת</h2>
+<h2>בחר סוג כניסה</h2>
 
-<form method="POST" action="/login">
-    <button type="submit" name="role" value="student">כניסת תלמיד</button>
-    <br><br>
-    <input type="password" name="password" placeholder="סיסמת מורה">
-    <button type="submit" name="role" value="teacher">כניסת מורה</button>
+<form method="post" action="/login">
+    <input type="hidden" name="role" value="student">
+    <button type="submit">כניסת תלמיד</button>
 </form>
+
+<br>
+
+<button onclick="toggleTeacher()">כניסת מורה</button>
+
+<form method="post" action="/login" id="teacherForm" style="display:none;">
+    <input type="hidden" name="role" value="teacher">
+    <input type="password" name="password" placeholder="סיסמה">
+    <button type="submit">אישור</button>
+</form>
+
+{% if error %}
+<p style="color:red">{{ error }}</p>
+{% endif %}
+
+<script>
+function toggleTeacher() {
+    document.getElementById("teacherForm").style.display = "block";
+}
+</script>
 
 </body>
 </html>
